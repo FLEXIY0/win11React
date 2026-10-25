@@ -246,6 +246,10 @@ export const loadSettings = () => {
     }
   }
 
+  if (sett.person.name == "Blue Edge") {
+    sett.person.name = store.getState().setting.person.name;
+  }
+
   if (sett.person.theme != "light") changeTheme();
 
   store.dispatch({ type: "SETTLOAD", payload: sett });
