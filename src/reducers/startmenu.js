@@ -9,12 +9,7 @@ const defState = {
   alpha: false,
   pwctrl: false,
   curAlpha: "A",
-  qksrch: [
-    ["faClock", 1, "Today in history"],
-    ["faChartLine", null, "Markets today"],
-    ["faFilm", null, "New movies"],
-    ["faNewspaper", 1, "Top news"],
-  ],
+  qksrch: [],
 };
 
 const menuReducer = (state = defState, action) => {

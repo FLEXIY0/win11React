@@ -132,7 +132,7 @@ export const LockScreen = (props) => {
           })}
         </div>
         <div className="text-lg font-medium text-gray-200">
-          {time.toLocaleDateString(undefined, {
+          {time.toLocaleDateString("ru-RU", {
             weekday: "long",
             month: "long",
             day: "numeric",
@@ -151,7 +151,7 @@ export const LockScreen = (props) => {
           {userName}
         </div>
         <div className="flex items-center mt-6 signInBtn" onClick={proceed}>
-          Sign in
+          Войти
         </div>
         {/*   <input type={passType?"text":"password"} value={password} onChange={action}
               data-action="inpass" onKeyDown={action2} placeholder={passType?"Password":"PIN"}/>

@@ -261,14 +261,7 @@ export const StartMenu = () => {
           </div>
           <div className="menuBar">
             <div className="profile handcr">
-              <Icon
-                src="blueProf"
-                ui
-                rounded
-                width={26}
-                click="EXTERNAL"
-                payload="https://blueedge.me"
-              />
+              <Icon src="defAccount" ui rounded width={26} />
               <div className="usName">{userName}</div>
             </div>
             <div className="relative powerMenu">
@@ -429,9 +422,7 @@ export const StartMenu = () => {
                       );
                     })}
                   </div>
-                  <div className="text-sm font-semibold mt-8">
-                    Quick Searches
-                  </div>
+
                   <div className="quickSearches mt-2">
                     {start.qksrch.map((srch, i) => {
                       return (
