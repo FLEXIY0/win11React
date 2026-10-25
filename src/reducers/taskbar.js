@@ -8,8 +8,8 @@ const defState = {
   prevApp: "",
   prevPos: 0,
   align: alignment,
-  search: true,
-  widgets: true,
+  search: false,
+  widgets: false,
   audio: 3,
 };
 

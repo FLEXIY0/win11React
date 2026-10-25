@@ -118,10 +118,10 @@ export const LockScreen = (props) => {
     >
       <div className="splashScreen mt-40" data-faded={lock}>
         <div className="text-6xl font-semibold text-gray-100">
-          {new Date().toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "numeric",
-            hour12: true,
+          {new Date().toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
           })}
         </div>
         <div className="text-lg font-medium text-gray-200">
