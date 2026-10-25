@@ -133,7 +133,15 @@ export const LockScreen = (props) => {
         </div>
       </div>
       <div className="fadeinScreen" data-faded={!lock} data-unlock={unlocked}>
-        <div className="text-2xl font-medium text-gray-200">{userName}</div>
+        <div className="defAvatar">
+          <svg viewBox="0 0 48 48" width="40%" height="40%" fill="#fff">
+            <circle cx="24" cy="13" r="10" />
+            <path d="M6 38c0-6 5-10 11-10h14c6 0 11 4 11 10v1c0 3-2 5-5 5H11c-3 0-5-2-5-5z" />
+          </svg>
+        </div>
+        <div className="mt-4 text-2xl font-medium text-gray-200">
+          {userName}
+        </div>
         <div className="flex items-center mt-6 signInBtn" onClick={proceed}>
           Sign in
         </div>

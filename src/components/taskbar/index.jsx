@@ -166,10 +166,10 @@ const Taskbar = () => {
               })}
             </div>
             <div>
-              {time.toLocaleDateString("en-US", {
-                year: "2-digit",
+              {time.toLocaleDateString("ru-RU", {
+                year: "numeric",
                 month: "2-digit",
-                day: "numeric",
+                day: "2-digit",
               })}
             </div>
           </div>
