@@ -110,7 +110,7 @@ export const LockScreen = (props) => {
       className={"lockscreen " + (props.dir == -1 ? "slowfadein" : "")}
       data-unlock={unlocked}
       style={{
-        backgroundImage: `url(${`img/wallpaper/lock.jpg`})`,
+        backgroundColor: "#000",
       }}
       onClick={action}
       data-action="splash"
