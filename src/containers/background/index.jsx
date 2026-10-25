@@ -5,14 +5,11 @@ import { Icon, Image } from "../../utils/general";
 import "./back.scss";
 
 export const Background = () => {
-  const wall = useSelector((state) => state.wallpaper);
-  const dispatch = useDispatch();
-
   return (
     <div
       className="background"
       style={{
-        backgroundImage: `url(img/wallpaper/${wall.src})`,
+        backgroundColor: "#000",
       }}
     ></div>
   );
