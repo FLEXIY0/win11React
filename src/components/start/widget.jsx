@@ -30,6 +30,7 @@ export const WidPane = () => {
               hour: "2-digit",
               minute: "2-digit",
               hour12: false,
+              timeZone: "Europe/Moscow",
             })}
           </div>
           <div className="widgetCont">

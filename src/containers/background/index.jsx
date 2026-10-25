@@ -73,6 +73,12 @@ export const LockScreen = (props) => {
   const dispatch = useDispatch();
 
   const userName = useSelector((state) => state.setting.person.name);
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const action = (e) => {
     var act = e.target.dataset.action,
@@ -118,28 +124,30 @@ export const LockScreen = (props) => {
     >
       <div className="splashScreen mt-40" data-faded={lock}>
         <div className="text-6xl font-semibold text-gray-100">
-          {new Date().toLocaleTimeString("en-GB", {
+          {time.toLocaleTimeString("en-GB", {
             hour: "2-digit",
             minute: "2-digit",
             hour12: false,
+            timeZone: "Europe/Moscow",
           })}
         </div>
         <div className="text-lg font-medium text-gray-200">
-          {new Date().toLocaleDateString(undefined, {
+          {time.toLocaleDateString(undefined, {
             weekday: "long",
             month: "long",
             day: "numeric",
+            timeZone: "Europe/Moscow",
           })}
         </div>
       </div>
       <div className="fadeinScreen" data-faded={!lock} data-unlock={unlocked}>
         <div className="defAvatar">
-          <svg viewBox="0 0 48 48" width="40%" height="40%" fill="#fff">
-            <circle cx="24" cy="13" r="10" />
-            <path d="M6 38c0-6 5-10 11-10h14c6 0 11 4 11 10v1c0 3-2 5-5 5H11c-3 0-5-2-5-5z" />
+          <svg viewBox="0 0 101 101" width="100%" height="100%" fill="#fff">
+            <circle cx="50.5" cy="38.5" r="13" />
+            <path d="M27.5 60A5 5 0 0 1 32.5 55H68.5A5 5 0 0 1 73.5 60V63.5A23 13.5 0 0 1 27.5 63.5Z" />
           </svg>
         </div>
-        <div className="mt-4 text-2xl font-medium text-gray-200">
+        <div className="mt-5 text-2xl font-medium text-gray-200">
           {userName}
         </div>
         <div className="flex items-center mt-6 signInBtn" onClick={proceed}>

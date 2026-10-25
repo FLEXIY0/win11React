@@ -163,6 +163,7 @@ const Taskbar = () => {
                 hour: "2-digit",
                 minute: "2-digit",
                 hour12: false,
+                timeZone: "Europe/Moscow",
               })}
             </div>
             <div>
@@ -170,6 +171,7 @@ const Taskbar = () => {
                 year: "numeric",
                 month: "2-digit",
                 day: "2-digit",
+                timeZone: "Europe/Moscow",
               })}
             </div>
           </div>
