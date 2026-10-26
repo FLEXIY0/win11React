@@ -80,22 +80,82 @@ export const BootScreen = (props) => {
   );
 };
 
-// Заглушка: пароль для входа на экране блокировки
-const LOCK_PASSWORD = "03112025";
-const LOCK_HINT = "ддммгггг";
+// Пароль с экрана входа не подходит никогда: войти можно только через
+// «Забыли пароль?» и контрольные вопросы.
+const TEASE_PASSWORD = "03112025";
+
+// answer: null — подходит любой непустой ответ
+const SECURITY_QUESTIONS = [
+  {
+    question: "Здание, около которого мы впервые встретились?",
+    placeholder: "Ответ на контрольный вопрос 1",
+    answer: null,
+  },
+  {
+    question: "Прозвище, которое ты дала своему парню?",
+    placeholder: "Ответ на контрольный вопрос 2",
+    answer: null,
+  },
+  {
+    question: "Дата важного дня в твоей жизни?",
+    placeholder: "ддммгггг",
+    answer: "03112025",
+    digits: true,
+  },
+];
+
+const normalizeAnswer = (val, digits) =>
+  digits
+    ? val.replace(/\D/g, "")
+    : val.trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ");
+
+const answersCorrect = (answers) =>
+  SECURITY_QUESTIONS.every((q, i) => {
+    const given = normalizeAnswer(answers[i] || "", q.digits);
+    if (!given) return false;
+    return q.answer == null || given == normalizeAnswer(q.answer, q.digits);
+  });
 
 const randomDelay = (min, max) => min + Math.random() * (max - min);
 
+const Toast = ({ show, onClose }) => (
+  <div
+    className="winToast"
+    data-show={show}
+    onClick={(e) => e.stopPropagation()}
+  >
+    <div className="winToastHead">
+      <svg width={14} height={14} viewBox="0 0 100 100">
+        <path
+          fill="#3ea8f4"
+          d="M0 0H48V48H0ZM52 0H100V48H52ZM0 52H48V100H0ZM52 52H100V100H52Z"
+        />
+      </svg>
+      <span>Windows</span>
+      <div className="winToastClose" onClick={onClose}>
+        <Icon fafa="faTimes" width={12} />
+      </div>
+    </div>
+    <div className="winToastBody">
+      <div className="winToastTitle">Ты большая молодец!</div>
+      <div className="winToastText">Но я хочу тебе кое-что показать)</div>
+    </div>
+  </div>
+);
+
 export const LockScreen = (props) => {
-  const wall = useSelector((state) => state.wallpaper);
   const [lock, setLock] = useState(false);
   const [unlocked, setUnLock] = useState(false);
   const [password, setPass] = useState("");
-  const [wrong, setWrong] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  // "password" | "questions"
+  const [mode, setMode] = useState("password");
+  const [answers, setAnswers] = useState(["", "", ""]);
+  const [wrong, setWrong] = useState(null);
+  const [forgotLink, setForgotLink] = useState(false);
   const [checking, setChecking] = useState(false);
   const [welcome, setWelcome] = useState(false);
   const [peek, setPeek] = useState(false);
+  const [toast, setToast] = useState(false);
   const dispatch = useDispatch();
 
   const userName = useSelector((state) => state.setting.person.name);
@@ -112,8 +172,28 @@ export const LockScreen = (props) => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(false), 9000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
   const action = (e) => {
     if (e.target.dataset.action == "splash") setLock(true);
+  };
+
+  const signIn = () => {
+    setChecking(false);
+    setWelcome(true);
+    setTimeout(
+      () => {
+        setUnLock(true);
+        setTimeout(() => {
+          dispatch({ type: "WALLUNLOCK" });
+        }, 1000);
+      },
+      randomDelay(1200, 3500),
+    );
   };
 
   const proceed = () => {
@@ -122,35 +202,37 @@ export const LockScreen = (props) => {
     setPeek(false);
     setChecking(true);
 
-    if (password != LOCK_PASSWORD) {
-      setTimeout(
-        () => {
-          setChecking(false);
-          setWrong(true);
-          setShowHint(true);
-          setPass("");
-        },
-        randomDelay(700, 2500),
-      );
-      return;
-    }
+    const tease = password.trim() == TEASE_PASSWORD;
+    setTimeout(
+      () => {
+        setChecking(false);
+        setWrong("password");
+        setForgotLink(true);
+        setPass("");
+        if (tease) setToast(true);
+      },
+      randomDelay(700, 2500),
+    );
+  };
 
-    // иногда вход проходит почти сразу, иногда «компьютер задумывается»
+  const submitAnswers = () => {
+    if (checking || welcome) return;
+
+    setChecking(true);
+    const ok = answersCorrect(answers);
+
+    // иногда проверка проходит почти сразу, иногда «компьютер задумывается»
     const think =
       Math.random() < 0.3 ? randomDelay(200, 600) : randomDelay(800, 3000);
 
     setTimeout(() => {
-      setChecking(false);
-      setWelcome(true);
-      setTimeout(
-        () => {
-          setUnLock(true);
-          setTimeout(() => {
-            dispatch({ type: "WALLUNLOCK" });
-          }, 1000);
-        },
-        randomDelay(1200, 3500),
-      );
+      if (ok) {
+        setToast(false);
+        signIn();
+      } else {
+        setChecking(false);
+        setWrong("answers");
+      }
     }, think);
   };
 
@@ -164,6 +246,106 @@ export const LockScreen = (props) => {
   const action2 = (e) => {
     if (e.key == "Enter") proceed();
   };
+
+  const answerKey = (i) => (e) => {
+    if (e.key != "Enter") return;
+    if (i < SECURITY_QUESTIONS.length - 1) {
+      const next = document.getElementById("secAnswer" + (i + 1));
+      if (next) next.focus();
+    } else submitAnswers();
+  };
+
+  const setAnswer = (i, val) => {
+    const tmp = [...answers];
+    tmp[i] = val;
+    setAnswers(tmp);
+  };
+
+  const openQuestions = () => {
+    setMode("questions");
+    setWrong(null);
+  };
+
+  const cancelQuestions = () => {
+    setMode("password");
+    setAnswers(["", "", ""]);
+    setWrong(null);
+  };
+
+  const eyeIcon = (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M12 5C6.5 5 2.7 9.4 1.6 11.4a1.3 1.3 0 0 0 0 1.2C2.7 14.6 6.5 19 12 19s9.3-4.4 10.4-6.4a1.3 1.3 0 0 0 0-1.2C21.3 9.4 17.5 5 12 5Zm0 12.5c-4.5 0-7.8-3.6-8.9-5.5C4.2 10.1 7.5 6.5 12 6.5s7.8 3.6 8.9 5.5c-1.1 1.9-4.4 5.5-8.9 5.5ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 6.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+
+  const renderPassword = () => (
+    <>
+      <div className="passBox mt-6">
+        {lock ? (
+          <input
+            type={peek ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPass(e.target.value)}
+            onKeyDown={action2}
+            placeholder="Пароль"
+            autoFocus
+          />
+        ) : null}
+        {password.length ? (
+          <div
+            className="passEye"
+            title="Показать пароль"
+            onPointerDown={peekOn}
+            onPointerUp={peekOff}
+            onPointerLeave={peekOff}
+          >
+            {eyeIcon}
+          </div>
+        ) : null}
+        <div className="passGo" onClick={proceed}>
+          <Icon fafa="faArrowRight" width={14} />
+        </div>
+      </div>
+      {forgotLink ? (
+        <div className="lockLink mt-4" onClick={openQuestions}>
+          Забыли пароль?
+        </div>
+      ) : null}
+    </>
+  );
+
+  const renderQuestions = () => (
+    <div className="secQuestions mt-4">
+      {SECURITY_QUESTIONS.map((q, i) => (
+        <React.Fragment key={i}>
+          <div className="secQuestion">{q.question}</div>
+          <div className="passBox">
+            <input
+              id={"secAnswer" + i}
+              type="text"
+              value={answers[i]}
+              onChange={(e) => setAnswer(i, e.target.value)}
+              onKeyDown={answerKey(i)}
+              placeholder={q.placeholder}
+              autoFocus={i == 0}
+              autoComplete="off"
+            />
+            {i == SECURITY_QUESTIONS.length - 1 ? (
+              <div className="passGo" onClick={submitAnswers}>
+                <Icon fafa="faArrowRight" width={14} />
+              </div>
+            ) : null}
+          </div>
+        </React.Fragment>
+      ))}
+      <div className="lockLink mt-5" onClick={cancelQuestions}>
+        Отмена
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -194,7 +376,12 @@ export const LockScreen = (props) => {
           })}
         </div>
       </div>
-      <div className="fadeinScreen" data-faded={!lock} data-unlock={unlocked}>
+      <div
+        className="fadeinScreen"
+        data-faded={!lock}
+        data-unlock={unlocked}
+        data-mode={mode}
+      >
         <div className="defAvatar">
           <svg viewBox="0 0 101 101" width="100%" height="100%" fill="#fff">
             <circle cx="50.5" cy="38.5" r="13" />
@@ -217,59 +404,29 @@ export const LockScreen = (props) => {
           </div>
         ) : wrong ? (
           <>
-            <div className="mt-6 text-sm text-gray-100">
-              Неверный пароль. Попробуйте ещё раз.
+            <div className="mt-6 text-sm text-gray-100 text-center px-4">
+              {wrong == "answers"
+                ? "Неверный ответ на один или несколько контрольных вопросов. Попробуйте ещё раз."
+                : "Неверный пароль. Попробуйте ещё раз."}
             </div>
             <div
               className="flex items-center mt-6 signInBtn"
-              onClick={() => setWrong(false)}
+              onClick={() => setWrong(null)}
             >
               ОК
             </div>
           </>
+        ) : mode == "questions" ? (
+          renderQuestions()
         ) : (
-          <>
-            <div className="passBox mt-6">
-              {lock ? (
-                <input
-                  type={peek ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPass(e.target.value)}
-                  onKeyDown={action2}
-                  placeholder="Пароль"
-                  autoFocus
-                />
-              ) : null}
-              {password.length ? (
-                <div
-                  className="passEye"
-                  title="Показать пароль"
-                  onPointerDown={peekOn}
-                  onPointerUp={peekOff}
-                  onPointerLeave={peekOff}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 5C6.5 5 2.7 9.4 1.6 11.4a1.3 1.3 0 0 0 0 1.2C2.7 14.6 6.5 19 12 19s9.3-4.4 10.4-6.4a1.3 1.3 0 0 0 0-1.2C21.3 9.4 17.5 5 12 5Zm0 12.5c-4.5 0-7.8-3.6-8.9-5.5C4.2 10.1 7.5 6.5 12 6.5s7.8 3.6 8.9 5.5c-1.1 1.9-4.4 5.5-8.9 5.5ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 6.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </div>
-              ) : null}
-              <div className="passGo" onClick={proceed}>
-                <Icon fafa="faArrowRight" width={14} />
-              </div>
-            </div>
-            {showHint ? (
-              <div className="mt-3 text-sm text-gray-300">{LOCK_HINT}</div>
-            ) : null}
-          </>
+          renderPassword()
         )}
       </div>
       <div className="bottomInfo flex">
         <Icon className="mx-2" src="wifi" ui width={16} invert />
         <Battery invert />
       </div>
+      <Toast show={toast} onClose={() => setToast(false)} />
     </div>
   );
 };

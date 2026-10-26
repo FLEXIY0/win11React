@@ -174,6 +174,36 @@
     }
   }
 
+  &[data-mode="questions"] .defAvatar {
+    width: 110px;
+    height: 110px;
+  }
+
+  .lockLink {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+
+    &:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+  }
+
+  .secQuestions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .secQuestion {
+      margin: 14px 0 8px;
+      padding: 0 12px;
+      font-size: 14px;
+      color: #fff;
+      text-align: center;
+    }
+  }
+
   .signInBtn {
     background: rgba(255, 255, 255, 0.2);
     font-size: 13px;
@@ -313,5 +343,70 @@
   100% {
     stroke-dasharray: 0.01px, 43.97px;
     transform: rotate(1080deg);
+  }
+}
+
+.winToast {
+  position: absolute;
+  right: 12px;
+  bottom: 56px;
+  z-index: 10;
+  width: 364px;
+  max-width: calc(100vw - 24px);
+  padding: 12px 14px 16px;
+  color: #fff;
+  background: rgba(39, 39, 39, 0.92);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  transform: translateX(calc(100% + 24px));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 400ms cubic-bezier(0.1, 0.9, 0.2, 1),
+    opacity 300ms ease;
+
+  &[data-show="true"] {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .winToastHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .winToastClose {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 24px;
+    margin-left: auto;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .winToastBody {
+    margin-top: 10px;
+  }
+
+  .winToastTitle {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .winToastText {
+    margin-top: 2px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
   }
 }
