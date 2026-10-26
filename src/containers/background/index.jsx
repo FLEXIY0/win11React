@@ -81,8 +81,7 @@ export const BootScreen = (props) => {
 };
 
 // Пароль с экрана входа не подходит никогда: войти можно только через
-// «Забыли пароль?» и контрольные вопросы.
-const TEASE_PASSWORD = "03112025";
+// подсказку, «Сбросить пароль» и контрольные вопросы.
 
 // answer: null — подходит любой непустой ответ
 const SECURITY_QUESTIONS = [
@@ -118,30 +117,48 @@ const answersCorrect = (answers) =>
 
 const randomDelay = (min, max) => min + Math.random() * (max - min);
 
-const Toast = ({ show, onClose }) => (
-  <div
-    className="winToast"
-    data-show={show}
-    onClick={(e) => e.stopPropagation()}
-  >
-    <div className="winToastHead">
-      <svg width={14} height={14} viewBox="0 0 100 100">
-        <path
-          fill="#3ea8f4"
-          d="M0 0H48V48H0ZM52 0H100V48H52ZM0 52H48V100H0ZM52 52H100V100H52Z"
-        />
-      </svg>
-      <span>Windows</span>
-      <div className="winToastClose" onClick={onClose}>
-        <Icon fafa="faTimes" width={12} />
+const PASSWORD_HINT = "Ты, должно быть, забыла пароль";
+const WELCOME_TOAST_EVENT = "welcomeToast";
+
+// Уведомление в стиле Windows 11 после удачного входа
+export const WelcomeToast = () => {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    const open = () => {
+      setShow(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setShow(false), 9000);
+    };
+    window.addEventListener(WELCOME_TOAST_EVENT, open);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener(WELCOME_TOAST_EVENT, open);
+    };
+  }, []);
+
+  return (
+    <div className="winToast" data-show={show}>
+      <div className="winToastHead">
+        <svg width={14} height={14} viewBox="0 0 100 100">
+          <path
+            fill="#3ea8f4"
+            d="M0 0H48V48H0ZM52 0H100V48H52ZM0 52H48V100H0ZM52 52H100V100H52Z"
+          />
+        </svg>
+        <span>Windows</span>
+        <div className="winToastClose" onClick={() => setShow(false)}>
+          <Icon fafa="faTimes" width={12} />
+        </div>
+      </div>
+      <div className="winToastBody">
+        <div className="winToastTitle">Ты большая молодец!</div>
+        <div className="winToastText">Но я хочу тебе кое-что показать)</div>
       </div>
     </div>
-    <div className="winToastBody">
-      <div className="winToastTitle">Ты большая молодец!</div>
-      <div className="winToastText">Но я хочу тебе кое-что показать)</div>
-    </div>
-  </div>
-);
+  );
+};
 
 export const LockScreen = (props) => {
   const [lock, setLock] = useState(false);
@@ -155,7 +172,6 @@ export const LockScreen = (props) => {
   const [checking, setChecking] = useState(false);
   const [welcome, setWelcome] = useState(false);
   const [peek, setPeek] = useState(false);
-  const [toast, setToast] = useState(false);
   const dispatch = useDispatch();
 
   const userName = useSelector((state) => state.setting.person.name);
@@ -172,12 +188,6 @@ export const LockScreen = (props) => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(false), 9000);
-    return () => clearTimeout(timer);
-  }, [toast]);
-
   const action = (e) => {
     if (e.target.dataset.action == "splash") setLock(true);
   };
@@ -190,6 +200,10 @@ export const LockScreen = (props) => {
         setUnLock(true);
         setTimeout(() => {
           dispatch({ type: "WALLUNLOCK" });
+          setTimeout(
+            () => window.dispatchEvent(new Event(WELCOME_TOAST_EVENT)),
+            1500,
+          );
         }, 1000);
       },
       randomDelay(1200, 3500),
@@ -202,14 +216,12 @@ export const LockScreen = (props) => {
     setPeek(false);
     setChecking(true);
 
-    const tease = password.trim() == TEASE_PASSWORD;
     setTimeout(
       () => {
         setChecking(false);
         setWrong("password");
         setForgotLink(true);
         setPass("");
-        if (tease) setToast(true);
       },
       randomDelay(700, 2500),
     );
@@ -227,7 +239,6 @@ export const LockScreen = (props) => {
 
     setTimeout(() => {
       if (ok) {
-        setToast(false);
         signIn();
       } else {
         setChecking(false);
@@ -310,9 +321,12 @@ export const LockScreen = (props) => {
         </div>
       </div>
       {forgotLink ? (
-        <div className="lockLink mt-4" onClick={openQuestions}>
-          Забыли пароль?
-        </div>
+        <>
+          <div className="mt-4 text-sm text-gray-300">{PASSWORD_HINT}</div>
+          <div className="lockLink mt-3" onClick={openQuestions}>
+            Сбросить пароль
+          </div>
+        </>
       ) : null}
     </>
   );
@@ -426,7 +440,6 @@ export const LockScreen = (props) => {
         <Icon className="mx-2" src="wifi" ui width={16} invert />
         <Battery invert />
       </div>
-      <Toast show={toast} onClose={() => setToast(false)} />
     </div>
   );
 };
