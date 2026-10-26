@@ -16,6 +16,7 @@ import {
 import Taskbar from "./components/taskbar";
 import {
   Background,
+  BOOT_TIME,
   Bsod,
   BootScreen,
   LockScreen,
@@ -25,50 +26,12 @@ import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
 import * as Drafts from "./containers/applications/draft";
 
-function ErrorFallback({ error, resetErrorBoundary }) {
+function ErrorFallback({ error }) {
   return (
-    <div>
-      <meta charSet="UTF-8" />
-      <title>404 - Page</title>
-      <script src="https://win11.blueedge.me/script.js"></script>
-      <link rel="stylesheet" href="https://win11.blueedge.me/style.css" />
-      {/* partial:index.partial.html */}
-      <div id="page">
-        <div id="container">
-          <h1>:(</h1>
-          <h2>
-            Your PC ran into a problem and needs to restart. We're just
-            collecting some error info, and then we'll restart for you.
-          </h2>
-          <h2>
-            <span id="percentage">0</span>% complete
-          </h2>
-          <div id="details">
-            <div id="qr">
-              <div id="image">
-                <img src="https://win11.blueedge.me/img/qr.png" alt="QR Code" />
-              </div>
-            </div>
-            <div id="stopcode">
-              <h4>
-                For more information about this issue and possible fixes, visit
-                <br />{" "}
-                <a href="https://github.com/blueedgetechno/win11React/issues">
-                  https://github.com/blueedgetechno/win11React/issues
-                </a>{" "}
-              </h4>
-              <h5>
-                If you call a support person, give them this info:
-                <br />
-                Stop Code: {error.message}
-              </h5>
-              <button onClick={resetErrorBoundary}>Try again</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* partial */}
-    </div>
+    <Bsod
+      code={error.message || "CRITICAL_PROCESS_DIED"}
+      onDone={() => window.location.reload()}
+    />
   );
 }
 
@@ -136,15 +99,40 @@ function App() {
       window.onstart = setTimeout(() => {
         // console.log("prematurely loading ( ﾉ ﾟｰﾟ)ﾉ");
         dispatch({ type: "WALLBOOTED" });
-      }, 8000);
+      }, BOOT_TIME);
     }
   });
+
+  // после входа рабочий стол «догружается»: панель задач появляется
+  // с задержкой, курсор какое-то время занят
+  const [taskbarReady, setTaskbarReady] = useState(false);
+
+  useEffect(() => {
+    if (wall.locked) {
+      setTaskbarReady(false);
+      return;
+    }
+    document.body.style.cursor = "progress";
+    const t1 = setTimeout(
+      () => setTaskbarReady(true),
+      900 + Math.random() * 900,
+    );
+    const t2 = setTimeout(
+      () => (document.body.style.cursor = ""),
+      2200 + Math.random() * 1200,
+    );
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      document.body.style.cursor = "";
+    };
+  }, [wall.locked]);
 
   return (
     <div className="App">
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         {crashed ? <Bsod onDone={() => setCrashed(false)} /> : null}
-        {!wall.booted ? <BootScreen dir={wall.dir} /> : null}
+        {!wall.booted ? <BootScreen dir={wall.dir} active={!crashed} /> : null}
         {wall.locked ? <LockScreen dir={wall.dir} /> : null}
         <div className="appwrap">
           <Background />
@@ -169,7 +157,7 @@ function App() {
             <WidPane />
             <CalnWid />
           </div>
-          <Taskbar />
+          {taskbarReady ? <Taskbar /> : null}
           <ActMenu />
         </div>
       </ErrorBoundary>

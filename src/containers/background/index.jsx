@@ -48,28 +48,46 @@ const STOPCODE_QR =
 
 // Синий экран при первом запуске: проценты доходят до 100, затем
 // экран гаснет и компьютер «перезагружается»
-export const Bsod = ({ onDone }) => {
+export const Bsod = ({ onDone, code = "CRITICAL_PROCESS_DIED" }) => {
   const [percent, setPercent] = useState(0);
   const [blackout, setBlackout] = useState(false);
 
   useEffect(() => {
     let timer;
+    // одно случайное «подвисание» где-то посередине
+    const stallAt = Math.round(randomDelay(30, 75));
+    let stalled = false;
+
     const step = (cur) => {
       if (cur >= 100) {
-        timer = setTimeout(() => {
-          setBlackout(true);
-          timer = setTimeout(onDone, 1500);
-        }, 1500);
+        // 100% ещё немного висит, потом экран гаснет и долго остаётся чёрным
+        timer = setTimeout(
+          () => {
+            setBlackout(true);
+            timer = setTimeout(onDone, randomDelay(3500, 5000));
+          },
+          randomDelay(1500, 2500),
+        );
         return;
       }
-      timer = setTimeout(
-        () => {
-          const next = Math.min(100, cur + Math.round(randomDelay(5, 25)));
-          setPercent(next);
-          step(next);
-        },
-        cur == 0 ? randomDelay(2000, 3000) : randomDelay(600, 2200),
-      );
+
+      let wait = randomDelay(800, 3200);
+      if (cur == 0) wait = randomDelay(5000, 8000);
+      else if (!stalled && cur >= stallAt) {
+        stalled = true;
+        wait = randomDelay(6000, 10000);
+      }
+
+      timer = setTimeout(() => {
+        // в основном маленькие шаги, иногда рывок
+        const inc =
+          Math.random() < 0.15
+            ? Math.round(randomDelay(10, 20))
+            : Math.round(randomDelay(1, 8));
+        const next = Math.min(100, cur + inc);
+        setPercent(next);
+        step(next);
+      }, wait);
     };
     step(0);
     return () => clearTimeout(timer);
@@ -100,7 +118,7 @@ export const Bsod = ({ onDone }) => {
                 Если вы будете звонить в службу поддержки, сообщите им следующие
                 сведения:
                 <br />
-                Код остановки: CRITICAL_PROCESS_DIED
+                Код остановки: {code}
               </div>
             </div>
           </div>
@@ -110,10 +128,37 @@ export const Bsod = ({ onDone }) => {
   );
 };
 
+// сколько длится экран загрузки после синего экрана
+export const BOOT_TIME = 9000;
+
 export const BootScreen = (props) => {
   const dispatch = useDispatch();
   const wall = useSelector((state) => state.wallpaper);
   const [blackout, setBlackOut] = useState(false);
+  // «шероховатости» первого запуска: чёрная пауза, логотип без кольца,
+  // мигание при смене разрешения, чёрный экран перед экраном входа
+  const [stage, setStage] = useState(props.dir < 0 ? "logo" : "black");
+  const [ring, setRing] = useState(props.dir < 0);
+  const [rescaled, setRescaled] = useState(false);
+
+  useEffect(() => {
+    if (!props.active || props.dir < 0) return;
+    const timers = [];
+    const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+    const logoAt = randomDelay(800, 1500);
+    const glitchAt = randomDelay(3500, 4500);
+    const glitchLen = randomDelay(120, 350);
+
+    at(logoAt, () => setStage("logo"));
+    at(logoAt + randomDelay(1200, 2200), () => setRing(true));
+    at(glitchAt, () => setStage("black"));
+    at(glitchAt + glitchLen, () => {
+      setRescaled(true);
+      setStage("logo");
+    });
+    at(BOOT_TIME - randomDelay(700, 1100), () => setStage("black"));
+    return () => timers.forEach(clearTimeout);
+  }, [props.active]);
 
   useEffect(() => {
     if (props.dir < 0) {
@@ -141,9 +186,12 @@ export const BootScreen = (props) => {
 
   return (
     <div className="bootscreen">
-      <div className={blackout ? "hidden" : ""}>
+      <div
+        className={blackout || stage == "black" ? "hidden" : ""}
+        data-rescaled={rescaled}
+      >
         <BootLogo />
-        <div className="mt-48" id="loader">
+        <div className="mt-48" id="loader" data-hide={!ring}>
           <svg
             className="progressRing"
             height={48}
@@ -256,7 +304,21 @@ export const LockScreen = (props) => {
   const dispatch = useDispatch();
 
   const userName = useSelector((state) => state.setting.person.name);
+  const booted = useSelector((state) => state.wallpaper.booted);
   const [time, setTime] = useState(new Date());
+  // после загрузки часы и значки внизу появляются не сразу
+  const [clockOn, setClockOn] = useState(false);
+  const [iconsOn, setIconsOn] = useState(false);
+
+  useEffect(() => {
+    if (!booted) return;
+    const t1 = setTimeout(() => setClockOn(true), randomDelay(250, 700));
+    const t2 = setTimeout(() => setIconsOn(true), randomDelay(700, 1400));
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [booted]);
 
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
@@ -456,7 +518,11 @@ export const LockScreen = (props) => {
       data-action="splash"
       data-blur={lock}
     >
-      <div className="splashScreen mt-40" data-faded={lock}>
+      <div
+        className="splashScreen mt-40"
+        data-faded={lock}
+        style={{ visibility: clockOn ? "visible" : "hidden" }}
+      >
         <div className="text-6xl font-semibold text-gray-100">
           {time.toLocaleTimeString("en-GB", {
             hour: "2-digit",
@@ -520,7 +586,10 @@ export const LockScreen = (props) => {
           renderPassword()
         )}
       </div>
-      <div className="bottomInfo flex">
+      <div
+        className="bottomInfo flex"
+        style={{ visibility: iconsOn ? "visible" : "hidden" }}
+      >
         <Icon className="mx-2" src="wifi" ui width={16} invert />
         <Battery invert />
       </div>
