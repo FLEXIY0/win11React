@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Battery from "../../components/shared/Battery";
-import { Icon, Image } from "../../utils/general";
+import { Icon } from "../../utils/general";
 import "./back.scss";
 
 export const Background = () => {
@@ -14,6 +14,30 @@ export const Background = () => {
     ></div>
   );
 };
+
+// Крутящиеся точки, как в Windows
+const Spinner = ({ size = 28 }) => (
+  <div className="winSpinner" style={{ "--size": size + "px" }}>
+    {[0, 1, 2, 3, 4].map((i) => (
+      <i key={i} />
+    ))}
+  </div>
+);
+
+const BootLogo = () => (
+  <svg width={150} height={150} viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="bootLogoGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#5ecbfa" />
+        <stop offset="1" stopColor="#0067c0" />
+      </linearGradient>
+    </defs>
+    <path
+      fill="url(#bootLogoGrad)"
+      d="M0 0H48V48H0ZM52 0H100V48H52ZM0 52H48V100H0ZM52 52H100V100H52Z"
+    />
+  </svg>
+);
 
 export const BootScreen = (props) => {
   const dispatch = useDispatch();
@@ -47,16 +71,9 @@ export const BootScreen = (props) => {
   return (
     <div className="bootscreen">
       <div className={blackout ? "hidden" : ""}>
-        <Image src="asset/bootlogo" w={180} />
+        <BootLogo />
         <div className="mt-48" id="loader">
-          <svg
-            className="progressRing"
-            height={48}
-            width={48}
-            viewBox="0 0 16 16"
-          >
-            <circle cx="8px" cy="8px" r="7px"></circle>
-          </svg>
+          <Spinner size={44} />
         </div>
       </div>
     </div>
@@ -68,12 +85,6 @@ const LOCK_PASSWORD = "03112025";
 const LOCK_HINT = "ддммгггг";
 
 const randomDelay = (min, max) => min + Math.random() * (max - min);
-
-const Spinner = () => (
-  <svg className="progressRing" height={32} width={32} viewBox="0 0 16 16">
-    <circle cx="8px" cy="8px" r="7px"></circle>
-  </svg>
-);
 
 export const LockScreen = (props) => {
   const wall = useSelector((state) => state.wallpaper);
@@ -194,9 +205,11 @@ export const LockScreen = (props) => {
           {userName}
         </div>
         {welcome ? (
-          <div className="flex items-center mt-6 gap-4 text-xl text-gray-100">
+          <div className="flex flex-col items-center mt-6">
             <Spinner />
-            Добро пожаловать
+            <div className="mt-6 text-lg font-medium text-gray-100">
+              Добро пожаловать
+            </div>
           </div>
         ) : checking ? (
           <div className="mt-6">
