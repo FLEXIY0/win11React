@@ -187,7 +187,7 @@ export const SidePane = () => {
     var tmp = [];
     for (var i = 0; i < sidepane.quicks.length; i++) {
       var val = getTreeValue(setting, sidepane.quicks[i].state);
-      if (sidepane.quicks[i].name == "Theme") val = val == "dark";
+      if (sidepane.quicks[i].name == "Тема") val = val == "dark";
       tmp.push(val);
     }
 
@@ -290,10 +290,11 @@ export const CalnWid = () => {
     >
       <div className="topBar pl-4 text-sm">
         <div className="date">
-          {new Date().toLocaleDateString(undefined, {
+          {new Date().toLocaleDateString("ru-RU", {
             weekday: "long",
             month: "long",
             day: "numeric",
+            timeZone: "Europe/Moscow",
           })}
         </div>
         <div className="collapser p-2 m-4 rounded" onClick={collapseToggler}>

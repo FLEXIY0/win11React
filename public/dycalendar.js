@@ -26,18 +26,18 @@
     //name of the months
     monthName = {
       full: [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
+        "Январь",
+        "Февраль",
+        "Март",
+        "Апрель",
+        "Май",
+        "Июнь",
+        "Июль",
+        "Август",
+        "Сентябрь",
+        "Октябрь",
+        "Ноябрь",
+        "Декабрь",
       ],
       mmm: [
         "Jan",
@@ -57,16 +57,16 @@
     //name of the days
     dayName = {
       full: [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
+        "Воскресенье",
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница",
+        "Суббота",
       ],
-      d: ["S", "M", "T", "W", "T", "F", "S"],
-      dd: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+      d: ["В", "П", "В", "С", "Ч", "П", "С"],
+      dd: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
       ddd: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     };
 

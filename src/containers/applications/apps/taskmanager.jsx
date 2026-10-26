@@ -15,21 +15,27 @@ apps.map((e) => {
 export const Taskmanager = () => {
   const wnapp = useSelector((state) => state.apps.taskmanager);
 
-  const [tab, setTab] = useState("Processes");
+  const [tab, setTab] = useState("Процессы");
   const [nav, setNav] = useState("open");
 
   const tabNames = [
-    { title: "Processes", icon: "faTableCellsLarge" },
-    { title: "Performance", icon: "faWaveSquare" },
-    { title: "App history", icon: "faClockRotateLeft" },
-    { title: "Startup apps", icon: "faGaugeHigh" },
-    { title: "Users", icon: "faUser" },
-    { title: "Details", icon: "faList" },
-    { title: "Services", icon: "faPuzzlePiece" },
-    { title: "Settings", icon: "faGear" },
+    { title: "Процессы", icon: "faTableCellsLarge" },
+    { title: "Производительность", icon: "faWaveSquare" },
+    { title: "Журнал приложений", icon: "faClockRotateLeft" },
+    { title: "Автозагрузка", icon: "faGaugeHigh" },
+    { title: "Пользователи", icon: "faUser" },
+    { title: "Подробности", icon: "faList" },
+    { title: "Службы", icon: "faPuzzlePiece" },
+    { title: "Параметры", icon: "faGear" },
   ];
 
-  const powerUsage = ["Very low", "Low", "Moderate", "High", "Very High"];
+  const powerUsage = [
+    "Очень низкое",
+    "Низкое",
+    "Умеренное",
+    "Высокое",
+    "Очень высокое",
+  ];
 
   return (
     <div
@@ -47,7 +53,7 @@ export const Taskmanager = () => {
         app={wnapp.action}
         icon={wnapp.icon}
         size={wnapp.size}
-        name="Task Manager"
+        name="Диспетчер задач"
       />
       <div className="windowScreen flex flex-col" data-dock="true">
         <div className="restWindow flex-grow flex flex-col">
@@ -70,19 +76,19 @@ export const Taskmanager = () => {
             <h3>{tab}</h3>
             {(() => {
               switch (tab) {
-                case "Processes":
+                case "Процессы":
                   return (
                     <div className="Processes">
                       <table>
                         <thead>
                           <tr>
-                            <th>Name</th>
-                            <th>CPU</th>
-                            <th>Memory</th>
-                            <th>Disk</th>
-                            <th>Network</th>
-                            <th>GPU</th>
-                            <th>Power Usage</th>
+                            <th>Имя</th>
+                            <th>ЦП</th>
+                            <th>Память</th>
+                            <th>Диск</th>
+                            <th>Сеть</th>
+                            <th>ГП</th>
+                            <th>Энергопотребление</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -91,9 +97,11 @@ export const Taskmanager = () => {
                               <tr key={i}>
                                 <td className="name">{e}</td>
                                 <td>{(Math.random() * 10).toFixed(2)}%</td>
-                                <td>{(Math.random() * 100).toFixed(2)} MB</td>
-                                <td>{(Math.random() * 50).toFixed(2)} MB/s</td>
-                                <td>{(Math.random() * 50).toFixed(2)} MBps</td>
+                                <td>{(Math.random() * 100).toFixed(2)} МБ</td>
+                                <td>{(Math.random() * 50).toFixed(2)} МБ/с</td>
+                                <td>
+                                  {(Math.random() * 50).toFixed(2)} Мбит/с
+                                </td>
                                 <td>{(Math.random() * 10).toFixed(2)}%</td>
                                 <td>
                                   {

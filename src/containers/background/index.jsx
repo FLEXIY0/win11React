@@ -63,13 +63,15 @@ export const BootScreen = (props) => {
   );
 };
 
+// Заглушка: пароль для входа на экране блокировки
+const LOCK_PASSWORD = "03112025";
+
 export const LockScreen = (props) => {
   const wall = useSelector((state) => state.wallpaper);
   const [lock, setLock] = useState(false);
   const [unlocked, setUnLock] = useState(false);
   const [password, setPass] = useState("");
-  const [passType, setType] = useState(1);
-  const [forgot, setForget] = useState(false);
+  const [wrong, setWrong] = useState(false);
   const dispatch = useDispatch();
 
   const userName = useSelector((state) => state.setting.person.name);
@@ -80,27 +82,23 @@ export const LockScreen = (props) => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const onKey = () => setLock(true);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const action = (e) => {
-    var act = e.target.dataset.action,
-      payload = e.target.dataset.payload;
-
-    if (act == "splash") setLock(true);
-    else if (act == "inpass") {
-      var val = e.target.value;
-      if (!passType) {
-        val = val.substring(0, 4);
-        val = !Number(val) ? "" : val;
-      }
-
-      setPass(val);
-    } else if (act == "forgot") setForget(true);
-    else if (act == "pinlock") setType(0);
-    else if (act == "passkey") setType(1);
-
-    if (act == "pinlock" || act == "passkey") setPass("");
+    if (e.target.dataset.action == "splash") setLock(true);
   };
 
   const proceed = () => {
+    if (password != LOCK_PASSWORD) {
+      setWrong(true);
+      setPass("");
+      return;
+    }
+
     setUnLock(true);
     setTimeout(() => {
       dispatch({ type: "WALLUNLOCK" });
@@ -150,27 +148,35 @@ export const LockScreen = (props) => {
         <div className="mt-5 text-2xl font-medium text-gray-200">
           {userName}
         </div>
-        <div className="flex items-center mt-6 signInBtn" onClick={proceed}>
-          Войти
-        </div>
-        {/*   <input type={passType?"text":"password"} value={password} onChange={action}
-              data-action="inpass" onKeyDown={action2} placeholder={passType?"Password":"PIN"}/>
-          <Icon className="-ml-6 handcr" fafa="faArrowRight" width={14}
-            color="rgba(170, 170, 170, 0.6)" onClick={proceed}/>
-        </div>
-        <div className="text-xs text-gray-400 mt-4 handcr"
-          onClick={proceed}>
-          {!forgot?`I forgot my ${passType?"password":"pin"}`:"Not my problem"}
-        </div>
-        <div className="text-xs text-gray-400 mt-6">
-          Sign-in options
-        </div>
-        <div className="lockOpt flex">
-          <Icon src="pinlock" onClick={action} ui width={36}
-            click="pinlock" payload={passType==0}/>
-          <Icon src="passkey" onClick={action} ui width={36}
-            click="passkey" payload={passType==1}/>
-        </div> */}
+        {wrong ? (
+          <>
+            <div className="mt-6 text-sm text-gray-100">
+              Неверный пароль. Попробуйте ещё раз.
+            </div>
+            <div
+              className="flex items-center mt-6 signInBtn"
+              onClick={() => setWrong(false)}
+            >
+              ОК
+            </div>
+          </>
+        ) : (
+          <div className="passBox mt-6">
+            {lock ? (
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPass(e.target.value)}
+                onKeyDown={action2}
+                placeholder="Пароль"
+                autoFocus
+              />
+            ) : null}
+            <div className="passGo" onClick={proceed}>
+              <Icon fafa="faArrowRight" width={14} />
+            </div>
+          </div>
+        )}
       </div>
       <div className="bottomInfo flex">
         <Icon className="mx-2" src="wifi" ui width={16} invert />

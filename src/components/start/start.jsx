@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Icon } from "../../utils/general";
 
+const LETTERS = ["#", ..."АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ"];
+
 export const StartMenu = () => {
   const { align } = useSelector((state) => state.taskbar);
   const start = useSelector((state) => {
@@ -16,14 +18,14 @@ export const StartMenu = () => {
 
     for (i = 0; i < arr.rcApps.length; i++) {
       if (arr.rcApps[i].lastUsed < 0) {
-        arr.rcApps[i].lastUsed = "Recently Added";
+        arr.rcApps[i].lastUsed = "Недавно добавлено";
       } else if (arr.rcApps[i].lastUsed < 10) {
-        arr.rcApps[i].lastUsed = "Just Now";
+        arr.rcApps[i].lastUsed = "Только что";
       } else if (arr.rcApps[i].lastUsed < 60) {
-        arr.rcApps[i].lastUsed += "m ago";
+        arr.rcApps[i].lastUsed += " мин. назад";
       } else if (arr.rcApps[i].lastUsed < 360) {
         arr.rcApps[i].lastUsed =
-          Math.floor(arr.rcApps[i].lastUsed / 60) + "h ago";
+          Math.floor(arr.rcApps[i].lastUsed / 60) + " ч. назад";
       }
     }
 
@@ -34,19 +36,15 @@ export const StartMenu = () => {
           return state.apps[key];
         });
 
-    tmpApps.sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
+    tmpApps.sort((a, b) => a.name.localeCompare(b.name, "ru"));
 
-    for (i = 0; i < 27; i++) {
+    for (i = 0; i < LETTERS.length; i++) {
       allApps[i] = [];
     }
 
     for (i = 0; i < tmpApps.length; i++) {
-      var t1 = tmpApps[i].name.trim().toUpperCase().charCodeAt(0);
-      if (t1 > 64 && t1 < 91) {
-        allApps[t1 - 64].push(tmpApps[i]);
-      } else {
-        allApps[0].push(tmpApps[i]);
-      }
+      var t1 = LETTERS.indexOf(tmpApps[i].name.trim().toUpperCase()[0]);
+      allApps[t1 > 0 ? t1 : 0].push(tmpApps[i]);
     }
 
     arr.contApps = allApps;
@@ -56,7 +54,7 @@ export const StartMenu = () => {
 
   const [query, setQuery] = useState("");
   const [match, setMatch] = useState({});
-  const [atab, setTab] = useState("All");
+  const [atab, setTab] = useState("Все");
   // const [pwctrl, setPowCtrl] = useState
 
   const dispatch = useDispatch();
@@ -88,8 +86,8 @@ export const StartMenu = () => {
       if (target) {
         target.parentNode.scrollTop = target.offsetTop;
       } else {
-        var target = document.getElementById("charA");
-        target.parentNode.scrollTop = 0;
+        var target = document.querySelector(".allApps");
+        if (target) target.scrollTop = 0;
       }
     }
   };
@@ -120,13 +118,13 @@ export const StartMenu = () => {
             <div className="menuUp">
               <div className="pinnedApps">
                 <div className="stAcbar">
-                  <div className="gpname">Pinned</div>
+                  <div className="gpname">Закреплено</div>
                   <div
                     className="gpbtn prtclk"
                     onClick={clickDispatch}
                     data-action="STARTALL"
                   >
-                    <div>All apps</div>
+                    <div>Все приложения</div>
                     <Icon fafa="faChevronRight" width={8} />
                   </div>
                 </div>
@@ -152,9 +150,9 @@ export const StartMenu = () => {
               </div>
               <div className="recApps win11Scroll">
                 <div className="stAcbar">
-                  <div className="gpname">Recommended</div>
+                  <div className="gpname">Рекомендуем</div>
                   <div className="gpbtn none">
-                    <div>More</div>
+                    <div>Ещё</div>
                     <Icon fafa="faChevronRight" width={8} />
                   </div>
                 </div>
@@ -184,14 +182,14 @@ export const StartMenu = () => {
           <div className="allCont" data-allapps={start.showAll}>
             <div className="appCont">
               <div className="stAcbar">
-                <div className="gpname">All apps</div>
+                <div className="gpname">Все приложения</div>
                 <div
                   className="gpbtn prtclk"
                   onClick={clickDispatch}
                   data-action="STARTALL"
                 >
                   <Icon className="chevLeft" fafa="faChevronLeft" width={8} />
-                  <div>Back</div>
+                  <div>Назад</div>
                 </div>
               </div>
               <div className="allApps win11Scroll" data-alpha={start.alpha}>
@@ -205,11 +203,9 @@ export const StartMenu = () => {
                       className="allApp prtclk"
                       data-action="STARTALPHA"
                       onClick={clickDispatch}
-                      id={`char${i == 0 ? "#" : String.fromCharCode(i + 64)}`}
+                      id={`char${LETTERS[i]}`}
                     >
-                      <div className="ltName">
-                        {i == 0 ? "#" : String.fromCharCode(i + 64)}
-                      </div>
+                      <div className="ltName">{LETTERS[i]}</div>
                     </div>,
                   );
 
@@ -245,13 +241,9 @@ export const StartMenu = () => {
                         }
                         data-action="STARTALPHA"
                         onClick={ldx.length == 0 ? null : clickDispatch}
-                        data-payload={
-                          i == 0 ? "#" : String.fromCharCode(i + 64)
-                        }
+                        data-payload={LETTERS[i]}
                       >
-                        <div className="ltName">
-                          {i == 0 ? "#" : String.fromCharCode(i + 64)}
-                        </div>
+                        <div className="ltName">{LETTERS[i]}</div>
                       </div>
                     );
                   })}
@@ -283,7 +275,7 @@ export const StartMenu = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span>Lock</span>
+                  <span>Заблокировать</span>
                 </div>
                 <div
                   className="flex prtclk items-center gap-2"
@@ -302,7 +294,7 @@ export const StartMenu = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span>Shut down</span>
+                  <span>Завершение работы</span>
                 </div>
                 <div
                   className="flex prtclk items-center gap-2"
@@ -321,7 +313,7 @@ export const StartMenu = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span>Restart</span>
+                  <span>Перезагрузка</span>
                 </div>
               </div>
               <svg
@@ -351,26 +343,26 @@ export const StartMenu = () => {
                 setQuery(event.target.value.trim());
               }}
               defaultValue={query}
-              placeholder="Type here to search"
+              placeholder="Введите здесь текст для поиска"
               autoFocus
             />
           </div>
           <div className="flex py-4 px-1 text-xs">
             <div className="opts w-1/2 flex justify-between">
-              <div value={atab == "All"} onClick={tabSw}>
-                All
+              <div value={atab == "Все"} onClick={tabSw}>
+                Все
               </div>
-              <div value={atab == "Apps"} onClick={tabSw}>
-                Apps
+              <div value={atab == "Приложения"} onClick={tabSw}>
+                Приложения
               </div>
-              <div value={atab == "Documents"} onClick={tabSw}>
-                Documents
+              <div value={atab == "Документы"} onClick={tabSw}>
+                Документы
               </div>
-              <div value={atab == "Web"} onClick={tabSw}>
-                Web
+              <div value={atab == "Интернет"} onClick={tabSw}>
+                Интернет
               </div>
-              <div value={atab == "More"} onClick={tabSw}>
-                More
+              <div value={atab == "Ещё"} onClick={tabSw}>
+                Ещё
               </div>
             </div>
           </div>
@@ -380,7 +372,7 @@ export const StartMenu = () => {
               data-width={query.length != 0}
             >
               <div className="text-sm font-semibold mb-4">
-                {query.length ? "Best match" : "Top apps"}
+                {query.length ? "Лучшее соответствие" : "Популярные приложения"}
               </div>
               {query.length ? (
                 <div className="textResult h-16">
@@ -388,7 +380,7 @@ export const StartMenu = () => {
                     <Icon src={match.icon} width={24} />
                     <div className="matchInfo flex-col px-2">
                       <div className="font-semibold text-xs">{match.name}</div>
-                      <div className="text-xss">App</div>
+                      <div className="text-xss">Приложение</div>
                     </div>
                   </div>
                   <div
@@ -399,8 +391,10 @@ export const StartMenu = () => {
                   >
                     <Icon className="blueicon" src="search" ui width={20} />
                     <div className="matchInfo flex-col px-2">
-                      <div className="font-semibold text-xs">Search online</div>
-                      <div className="text-xss">Web</div>
+                      <div className="font-semibold text-xs">
+                        Искать в Интернете
+                      </div>
+                      <div className="text-xss">Интернет</div>
                     </div>
                   </div>
                 </div>
@@ -446,7 +440,7 @@ export const StartMenu = () => {
               <div className="w-2/3 rightSide rounded">
                 <Icon className="mt-6" src={match.icon} width={64} />
                 <div className="">{match.name}</div>
-                <div className="text-xss mt-2">App</div>
+                <div className="text-xss mt-2">Приложение</div>
                 <div className="hline mt-8"></div>
                 <div
                   className="openlink w-4/5 flex prtclk handcr pt-3"
@@ -455,7 +449,7 @@ export const StartMenu = () => {
                   data-payload={match.payload ? match.payload : "full"}
                 >
                   <Icon className="blueicon" src="link" ui width={16} />
-                  <div className="text-xss ml-3">Open</div>
+                  <div className="text-xss ml-3">Открыть</div>
                 </div>
               </div>
             ) : null}

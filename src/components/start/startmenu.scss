@@ -374,10 +374,10 @@ body[data-theme="dark"] .startMenu {
 .alphaCont {
   margin-left: -48px;
   width: 160px;
-  height: 280px;
+  height: 320px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
   color: var(--txt-col);
   cursor: pointer;
 

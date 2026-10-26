@@ -23,22 +23,22 @@ const defState = {
   menus: {
     desk: [
       {
-        name: "View",
+        name: "Вид",
         icon: "view",
         type: "svg",
         opts: [
           {
-            name: "Large icons",
+            name: "Крупные значки",
             action: "changeIconSize",
             payload: "large",
           },
           {
-            name: "Medium icons",
+            name: "Обычные значки",
             action: "changeIconSize",
             payload: "medium",
           },
           {
-            name: "Small icons",
+            name: "Мелкие значки",
             action: "changeIconSize",
             payload: "small",
             dot: true,
@@ -47,36 +47,36 @@ const defState = {
             type: "hr",
           },
           {
-            name: "Show desktop icons",
+            name: "Отображать значки рабочего стола",
             action: "deskHide",
             check: true,
           },
         ],
       },
       {
-        name: "Sort by",
+        name: "Сортировка",
         icon: "sort",
         type: "svg",
         opts: [
           {
-            name: "Name",
+            name: "Имя",
             action: "changeSort",
             payload: "name",
           },
           {
-            name: "Size",
+            name: "Размер",
             action: "changeSort",
             payload: "size",
           },
           {
-            name: "Date modified",
+            name: "Дата изменения",
             action: "changeSort",
             payload: "date",
           },
         ],
       },
       {
-        name: "Refresh",
+        name: "Обновить",
         action: "refresh",
         type: "svg",
         icon: "refresh",
@@ -85,21 +85,21 @@ const defState = {
         type: "hr",
       },
       {
-        name: "New",
+        name: "Создать",
         icon: "New",
         type: "svg",
         opts: [
           {
-            name: "Folder",
+            name: "Папку",
           },
           {
-            name: "Shortcut",
+            name: "Ярлык",
           },
           {
-            name: "Text Document",
+            name: "Текстовый документ",
           },
           {
-            name: "Compressed (zipped) Folder",
+            name: "Сжатую ZIP-папку",
           },
         ],
       },
@@ -107,14 +107,14 @@ const defState = {
         type: "hr",
       },
       {
-        name: "Display settings",
+        name: "Параметры экрана",
         icon: "display",
         type: "svg",
         action: "SETTINGS",
         payload: "full",
       },
       {
-        name: "Personalize",
+        name: "Персонализация",
         icon: "personalize",
         type: "svg",
         action: "SETTINGS",
@@ -124,11 +124,11 @@ const defState = {
         type: "hr",
       },
       {
-        name: "Next desktop background",
+        name: "Следующее фоновое изображение рабочего стола",
         action: "WALLNEXT",
       },
       {
-        name: "Open in Terminal",
+        name: "Открыть в Терминале",
         icon: "terminal",
         action: "OPENTERM",
         payload: "C:\\Users\\Blue\\Desktop",
@@ -136,15 +136,15 @@ const defState = {
     ],
     task: [
       {
-        name: "Align icons",
+        name: "Выравнивание значков",
         opts: [
           {
-            name: "Left",
+            name: "По левому краю",
             action: "changeTaskAlign",
             payload: "left",
           },
           {
-            name: "Center",
+            name: "По центру",
             action: "changeTaskAlign",
             payload: "center",
             dot: true,
@@ -155,30 +155,30 @@ const defState = {
         type: "hr",
       },
       {
-        name: "Search",
+        name: "Поиск",
         opts: [
           {
-            name: "Show",
+            name: "Показать",
             action: "TASKSRCH",
             payload: true,
           },
           {
-            name: "Hide",
+            name: "Скрыть",
             action: "TASKSRCH",
             payload: false,
           },
         ],
       },
       {
-        name: "Widgets",
+        name: "Виджеты",
         opts: [
           {
-            name: "Show",
+            name: "Показать",
             action: "TASKWIDG",
             payload: true,
           },
           {
-            name: "Hide",
+            name: "Скрыть",
             action: "TASKWIDG",
             payload: false,
           },
@@ -188,52 +188,52 @@ const defState = {
         type: "hr",
       },
       {
-        name: "Show Desktop",
+        name: "Свернуть все окна",
         action: "SHOWDSK",
       },
     ],
     app: [
       {
-        name: "Open",
+        name: "Открыть",
         action: "performApp",
         payload: "open",
       },
       {
-        name: "Run as administrator",
+        name: "Запуск от имени администратора",
         action: "performApp",
         payload: "open",
         icon: "win/shield",
       },
       {
-        name: "Open file location",
+        name: "Расположение файла",
         dsb: true,
       },
       {
-        name: "Unpin from start",
+        name: "Открепить от начального экрана",
         dsb: true,
       },
       {
-        name: "Compress to Zip file",
+        name: "Сжать в ZIP-файл",
         dsb: true,
       },
       {
-        name: "Copy as path",
+        name: "Копировать как путь",
         dsb: true,
       },
       {
-        name: "Properties",
+        name: "Свойства",
         dsb: true,
       },
       {
         type: "hr",
       },
       {
-        name: "Delete shortcut",
+        name: "Удалить ярлык",
         action: "performApp",
         payload: "delshort",
       },
       {
-        name: "Delete",
+        name: "Удалить",
         action: "delApp",
         payload: "delete",
       },

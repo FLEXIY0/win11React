@@ -122,17 +122,13 @@ function App() {
 
   window.onclick = afterMath;
 
-  window.onload = (e) => {
-    dispatch({ type: "WALLBOOTED" });
-  };
-
   useEffect(() => {
     if (!window.onstart) {
       loadSettings();
       window.onstart = setTimeout(() => {
         // console.log("prematurely loading ( ﾉ ﾟｰﾟ)ﾉ");
         dispatch({ type: "WALLBOOTED" });
-      }, 5000);
+      }, 8000);
     }
   });
 

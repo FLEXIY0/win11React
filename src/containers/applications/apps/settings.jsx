@@ -6,6 +6,20 @@ import LangSwitch from "./assets/Langswitch";
 import "./assets/settings.scss";
 import data from "./assets/settingsData.json";
 
+const pageNames = {
+  System: "Система",
+  "Bluetooth & devices": "Bluetooth и устройства",
+  "Network & internet": "Сеть и Интернет",
+  Personalisation: "Персонализация",
+  Apps: "Приложения",
+  Accounts: "Учётные записи",
+  "Time & language": "Время и язык",
+  Gaming: "Игры",
+  Accessibility: "Специальные возможности",
+  "Privacy & security": "Конфиденциальность и защита",
+  "Windows Update": "Центр обновления Windows",
+};
+
 export const Settings = () => {
   const wnapp = useSelector((state) => state.apps.settings);
   const theme = useSelector((state) => state.setting.person.theme);
@@ -60,7 +74,7 @@ export const Settings = () => {
         app={wnapp.action}
         icon={wnapp.icon}
         size={wnapp.size}
-        name="Settings"
+        name="Параметры"
       />
       <div className="windowScreen flex flex-col" data-dock="true">
         <div className="restWindow flex-grow flex flex-col">
@@ -75,13 +89,13 @@ export const Settings = () => {
                 />
                 <div>
                   <p>{userName}</p>
-                  <p>Local Account</p>
+                  <p>Локальная учётная запись</p>
                 </div>
               </div>
               <input
                 type="text"
                 className="search"
-                placeholder="Find a setting "
+                placeholder="Найти параметр"
                 name="search"
               />
             </div>
@@ -102,7 +116,7 @@ export const Settings = () => {
                       height={16}
                       width={16}
                     />
-                    {e}
+                    {pageNames[e] || e}
                   </div>
                 );
               })}
@@ -114,7 +128,7 @@ export const Settings = () => {
             return (
               page === e && (
                 <main key={e}>
-                  <h1>{e}</h1>
+                  <h1>{pageNames[e] || e}</h1>
                   <div className="tilesCont win11Scroll">
                     {data[e].map((e, i) => {
                       switch (e.type) {
@@ -130,7 +144,7 @@ export const Settings = () => {
                                 <div className="column_device">
                                   <p className="device_name">Liber-V</p>
                                   <p className="device_model">NS14A8</p>
-                                  <p className="device_rename">Rename</p>
+                                  <p className="device_rename">Переименовать</p>
                                 </div>
                               </div>
                               <div className="right">
@@ -144,7 +158,7 @@ export const Settings = () => {
                                     Microsoft 365
                                     <br />
                                     <span className="column_lower">
-                                      View benefits
+                                      Просмотреть преимущества
                                     </span>
                                   </p>
                                 </div>
@@ -158,10 +172,10 @@ export const Settings = () => {
                                     height={20}
                                   />
                                   <p>
-                                    Windows Update
+                                    Центр обновления Windows
                                     <br />
                                     <span className="column_lower">
-                                      You're up to date
+                                      Установлены все обновления
                                     </span>
                                   </p>
                                 </div>
@@ -178,24 +192,24 @@ export const Settings = () => {
                                   height={100}
                                 />
                                 <div>
-                                  <h2 className="font-medium text-lg">WiFi</h2>
-                                  <p>Connected, secured</p>
+                                  <h2 className="font-medium text-lg">Wi-Fi</h2>
+                                  <p>Подключено, защищено</p>
                                 </div>
                               </div>
                               <div className="box">
                                 <span className="settingsIcon"></span>
                                 <div>
-                                  <h3>Properties</h3>
-                                  <p>Public network 5 Ghz</p>
+                                  <h3>Свойства</h3>
+                                  <p>Общедоступная сеть 5 ГГц</p>
                                 </div>
                               </div>
                               <div className="box">
                                 <span className="settingsIcon"></span>
                                 <div>
-                                  <h3>Data Usage</h3>
+                                  <h3>Использование данных</h3>
                                   <p>
-                                    {Math.round(Math.random() * 100)}GB, last 30
-                                    days
+                                    {Math.round(Math.random() * 100)} ГБ за
+                                    последние 30 дней
                                   </p>
                                 </div>
                               </div>
@@ -210,7 +224,7 @@ export const Settings = () => {
                                 alt=""
                               />
                               <div>
-                                <h3>Select a theme to apply</h3>
+                                <h3>Выберите тему</h3>
                                 <div className="bgBox">
                                   {wall.themes.map((e, i) => {
                                     return (
@@ -241,8 +255,8 @@ export const Settings = () => {
                               />
                               <div>
                                 <p>{userName.toUpperCase()}</p>
-                                <p>Local Account</p>
-                                <p>Administrator</p>
+                                <p>Локальная учётная запись</p>
+                                <p>Администратор</p>
                               </div>
                             </div>
                           );
@@ -264,10 +278,10 @@ export const Settings = () => {
                             <div key={i} className="tile langSwitcherTile">
                               <span className="settingsIcon"></span>
                               <div className="tile_content">
-                                <p>Windows display language</p>
+                                <p>Язык интерфейса Windows</p>
                                 <p className="tile_desc">
-                                  Windows features like Settings and File
-                                  Explorer will appear in this language
+                                  Параметры, Проводник и другие компоненты
+                                  Windows будут отображаться на этом языке
                                 </p>
                               </div>
                               <LangSwitch />
@@ -283,8 +297,8 @@ export const Settings = () => {
                                   alt=""
                                 />
                                 <div>
-                                  <h2>You're up to date</h2>
-                                  <p>Last checked: Today</p>
+                                  <h2>Установлены все обновления</h2>
+                                  <p>Последняя проверка: сегодня</p>
                                 </div>
                               </div>
                               <div className="right">
@@ -299,8 +313,8 @@ export const Settings = () => {
                                   }}
                                 >
                                   {updating
-                                    ? "Checking for updates..."
-                                    : "Check for updates"}
+                                    ? "Проверка обновлений..."
+                                    : "Проверить наличие обновлений"}
                                 </div>
                               </div>
                             </div>
@@ -355,11 +369,11 @@ export const Settings = () => {
                   }}
                   className="text-2xl font-semibold"
                 >
-                  Restart required
+                  Требуется перезагрузка
                 </h1>
                 <p>
-                  Some changes will not take effect until you restart your
-                  device.
+                  Некоторые изменения вступят в силу только после перезагрузки
+                  устройства.
                 </p>
 
                 <div
@@ -382,7 +396,7 @@ export const Settings = () => {
                     }}
                     className="flex-1 rounded border-none hover:opacity-95"
                   >
-                    Restart now
+                    Перезагрузить сейчас
                   </button>
                   <button
                     style={{
@@ -394,7 +408,7 @@ export const Settings = () => {
                       setUpmodalOpen(false);
                     }}
                   >
-                    Restart later
+                    Перезагрузить позже
                   </button>
                 </div>
               </div>

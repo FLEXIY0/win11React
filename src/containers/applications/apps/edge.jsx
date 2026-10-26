@@ -14,20 +14,9 @@ export const EdgeMenu = () => {
     "https://www.google.com/webhp?igu=1": "Google",
     "https://bing.com": "Bing",
     "https://www.youtube.com/embed/m0EHSoZzHEA": "Youtube",
-    "https://blueedge.me": "blueedge",
-    "https://andrewstech.me": "\nandrewstech",
-    "https://blueedge.me/unescape": "Unescape",
-    "https://win11.blueedge.me": "Inception",
-    "https://open.spotify.com/embed/user/jhfivkgdtg4s97pwbo1rbvr9v/playlist/6IdR78TOog83PV4XhLDvWN":
-      "Spotify",
-    "https://bluelab.blueedge.me": "BlueLab",
-    "https://othello.blueedge.me": "Othello",
   };
 
-  const favicons = {
-    "https://andrewstech.me":
-      "https://avatars.githubusercontent.com/u/45342431",
-  };
+  const favicons = {};
 
   const isValidURL = (string) => {
     var res = string.match(
@@ -118,14 +107,14 @@ export const EdgeMenu = () => {
         app={wnapp.action}
         icon={wnapp.icon}
         size={wnapp.size}
-        name="Browser"
+        name="Браузер"
         float
       />
       <div className="windowScreen flex flex-col">
         <div className="overTool flex">
           <Icon src={wnapp.icon} width={14} margin="0 6px" />
           <div className="btab">
-            <div>New Tab</div>
+            <div>Новая вкладка</div>
             <Icon
               fafa="faTimes"
               click={wnapp.action}
@@ -175,7 +164,7 @@ export const EdgeMenu = () => {
                 onChange={typing}
                 data-payload={3}
                 value={url}
-                placeholder="Type url or a query to search"
+                placeholder="Введите адрес или поисковый запрос"
                 type="text"
               />
               <Icon
@@ -239,9 +228,9 @@ export const EdgeMenu = () => {
                 x
               </div>
               <div className="text-gray-800 text-xs font-medium">
-                If it shows <b>"Refused to connect"</b>, then{" "}
-                <b>that website doesn't allow </b>
-                other websites to show their content. <b>I cannot fix it</b>.
+                Если появляется <b>«Отказано в подключении»</b>, значит,{" "}
+                <b>этот сайт не разрешает </b>
+                показывать своё содержимое на других сайтах.
               </div>
             </div>
           </div>

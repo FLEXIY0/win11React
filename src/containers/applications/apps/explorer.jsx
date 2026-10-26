@@ -182,7 +182,7 @@ export const Explorer = () => {
         app={wnapp.action}
         icon={wnapp.icon}
         size={wnapp.size}
-        name="File Explorer"
+        name="Проводник"
       />
       <div className="windowScreen flex flex-col">
         <Ribbon />
@@ -230,7 +230,7 @@ export const Explorer = () => {
                 type="text"
                 onChange={handleSearchChange}
                 value={searchtxt}
-                placeholder="Search"
+                placeholder="Поиск"
               />
             </div>
           </div>
@@ -320,7 +320,7 @@ const ContentArea = ({ searchtxt }) => {
           })}
         </div>
         {fdata.data.length == 0 ? (
-          <span className="text-xs mx-auto">This folder is empty.</span>
+          <span className="text-xs mx-auto">Эта папка пуста.</span>
         ) : null}
       </div>
     </div>
@@ -334,35 +334,45 @@ const NavPane = ({}) => {
   return (
     <div className="navpane win11Scroll">
       <div className="extcont">
-        <Dropdown icon="star" title="Quick access" action="" isDropped>
+        <Dropdown icon="star" title="Быстрый доступ" action="" isDropped>
           <Dropdown
             icon="down"
-            title="Downloads"
+            title="Загрузки"
             spid="%downloads%"
             notoggle
             pinned
           />
-          <Dropdown icon="user" title="Blue" spid="%user%" notoggle pinned />
+          <Dropdown
+            icon="user"
+            title="pletnevava"
+            spid="%user%"
+            notoggle
+            pinned
+          />
           <Dropdown
             icon="docs"
-            title="Documents"
+            title="Документы"
             spid="%documents%"
             notoggle
             pinned
           />
-          <Dropdown title="Github" spid="%github%" notoggle />
-          <Dropdown icon="pics" title="Pictures" spid="%pictures%" notoggle />
+          <Dropdown
+            icon="pics"
+            title="Изображения"
+            spid="%pictures%"
+            notoggle
+          />
         </Dropdown>
         <Dropdown icon="onedrive" title="OneDrive" spid="%onedrive%" />
-        <Dropdown icon="thispc" title="This PC" action="" isDropped>
-          <Dropdown icon="desk" title="Desktop" spid="%desktop%" />
-          <Dropdown icon="docs" title="Documents" spid="%documents%" />
-          <Dropdown icon="down" title="Downloads" spid="%downloads%" />
-          <Dropdown icon="music" title="Music" spid="%music%" />
-          <Dropdown icon="pics" title="Pictures" spid="%pictures%" />
-          <Dropdown icon="vid" title="Videos" spid="%videos%" />
-          <Dropdown icon="disc" title="OS (C:)" spid="%cdrive%" />
-          <Dropdown icon="disk" title="Blue (D:)" spid="%ddrive%" />
+        <Dropdown icon="thispc" title="Этот компьютер" action="" isDropped>
+          <Dropdown icon="desk" title="Рабочий стол" spid="%desktop%" />
+          <Dropdown icon="docs" title="Документы" spid="%documents%" />
+          <Dropdown icon="down" title="Загрузки" spid="%downloads%" />
+          <Dropdown icon="music" title="Музыка" spid="%music%" />
+          <Dropdown icon="pics" title="Изображения" spid="%pictures%" />
+          <Dropdown icon="vid" title="Видео" spid="%videos%" />
+          <Dropdown icon="disc" title="Локальный диск (C:)" spid="%cdrive%" />
+          <Dropdown icon="disk" title="Локальный диск (D:)" spid="%ddrive%" />
         </Dropdown>
       </div>
     </div>
@@ -375,7 +385,7 @@ const Ribbon = ({}) => {
       <div className="ribsec">
         <div className="drdwcont flex">
           <Icon src="new" ui width={18} margin="0 6px" />
-          <span>New</span>
+          <span>Создать</span>
         </div>
       </div>
       <div className="ribsec">
@@ -388,11 +398,11 @@ const Ribbon = ({}) => {
       <div className="ribsec">
         <div className="drdwcont flex">
           <Icon src="sort" ui width={18} margin="0 6px" />
-          <span>Sort</span>
+          <span>Сортировать</span>
         </div>
         <div className="drdwcont flex">
           <Icon src="view" ui width={18} margin="0 6px" />
-          <span>View</span>
+          <span>Просмотреть</span>
         </div>
       </div>
     </div>
