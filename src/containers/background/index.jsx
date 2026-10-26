@@ -15,8 +15,9 @@ export const Background = () => {
   );
 };
 
-// Крутящиеся точки, как в Windows
-const Spinner = ({ size = 28 }) => (
+// Крутящиеся точки экрана входа Windows; анимация по CSS-Windows-Loader
+// (github.com/JkDevArg/CSS-Windows-Loader, MIT)
+const Spinner = ({ size = 22 }) => (
   <div className="winSpinner" style={{ "--size": size + "px" }}>
     {[0, 1, 2, 3, 4].map((i) => (
       <i key={i} />
@@ -73,7 +74,14 @@ export const BootScreen = (props) => {
       <div className={blackout ? "hidden" : ""}>
         <BootLogo />
         <div className="mt-48" id="loader">
-          <Spinner size={44} />
+          <svg
+            className="progressRing"
+            height={48}
+            width={48}
+            viewBox="0 0 16 16"
+          >
+            <circle cx="8px" cy="8px" r="7px"></circle>
+          </svg>
         </div>
       </div>
     </div>
@@ -117,7 +125,6 @@ const answersCorrect = (answers) =>
 
 const randomDelay = (min, max) => min + Math.random() * (max - min);
 
-const PASSWORD_HINT = "Ты, должно быть, забыла пароль";
 const WELCOME_TOAST_EVENT = "welcomeToast";
 
 // Уведомление в стиле Windows 11 после удачного входа
@@ -321,12 +328,9 @@ export const LockScreen = (props) => {
         </div>
       </div>
       {forgotLink ? (
-        <>
-          <div className="mt-4 text-sm text-gray-300">{PASSWORD_HINT}</div>
-          <div className="lockLink mt-3" onClick={openQuestions}>
-            Сбросить пароль
-          </div>
-        </>
+        <div className="lockLink mt-4" onClick={openQuestions}>
+          Сбросить пароль
+        </div>
       ) : null}
     </>
   );
