@@ -65,6 +65,7 @@ export const BootScreen = (props) => {
 
 // Заглушка: пароль для входа на экране блокировки
 const LOCK_PASSWORD = "03112025";
+const LOCK_HINT = "ддммгггг";
 
 const randomDelay = (min, max) => min + Math.random() * (max - min);
 
@@ -80,6 +81,7 @@ export const LockScreen = (props) => {
   const [unlocked, setUnLock] = useState(false);
   const [password, setPass] = useState("");
   const [wrong, setWrong] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const [checking, setChecking] = useState(false);
   const [welcome, setWelcome] = useState(false);
   const [peek, setPeek] = useState(false);
@@ -114,6 +116,7 @@ export const LockScreen = (props) => {
         () => {
           setChecking(false);
           setWrong(true);
+          setShowHint(true);
           setPass("");
         },
         randomDelay(700, 2500),
@@ -212,37 +215,42 @@ export const LockScreen = (props) => {
             </div>
           </>
         ) : (
-          <div className="passBox mt-6">
-            {lock ? (
-              <input
-                type={peek ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPass(e.target.value)}
-                onKeyDown={action2}
-                placeholder="Пароль"
-                autoFocus
-              />
-            ) : null}
-            {password.length ? (
-              <div
-                className="passEye"
-                title="Показать пароль"
-                onPointerDown={peekOn}
-                onPointerUp={peekOff}
-                onPointerLeave={peekOff}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 5C6.5 5 2.7 9.4 1.6 11.4a1.3 1.3 0 0 0 0 1.2C2.7 14.6 6.5 19 12 19s9.3-4.4 10.4-6.4a1.3 1.3 0 0 0 0-1.2C21.3 9.4 17.5 5 12 5Zm0 12.5c-4.5 0-7.8-3.6-8.9-5.5C4.2 10.1 7.5 6.5 12 6.5s7.8 3.6 8.9 5.5c-1.1 1.9-4.4 5.5-8.9 5.5ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 6.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"
-                    fill="currentColor"
-                  />
-                </svg>
+          <>
+            <div className="passBox mt-6">
+              {lock ? (
+                <input
+                  type={peek ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPass(e.target.value)}
+                  onKeyDown={action2}
+                  placeholder="Пароль"
+                  autoFocus
+                />
+              ) : null}
+              {password.length ? (
+                <div
+                  className="passEye"
+                  title="Показать пароль"
+                  onPointerDown={peekOn}
+                  onPointerUp={peekOff}
+                  onPointerLeave={peekOff}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M12 5C6.5 5 2.7 9.4 1.6 11.4a1.3 1.3 0 0 0 0 1.2C2.7 14.6 6.5 19 12 19s9.3-4.4 10.4-6.4a1.3 1.3 0 0 0 0-1.2C21.3 9.4 17.5 5 12 5Zm0 12.5c-4.5 0-7.8-3.6-8.9-5.5C4.2 10.1 7.5 6.5 12 6.5s7.8 3.6 8.9 5.5c-1.1 1.9-4.4 5.5-8.9 5.5ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 6.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </div>
+              ) : null}
+              <div className="passGo" onClick={proceed}>
+                <Icon fafa="faArrowRight" width={14} />
               </div>
-            ) : null}
-            <div className="passGo" onClick={proceed}>
-              <Icon fafa="faArrowRight" width={14} />
             </div>
-          </div>
+            {showHint ? (
+              <div className="mt-3 text-sm text-gray-300">{LOCK_HINT}</div>
+            ) : null}
+          </>
         )}
       </div>
       <div className="bottomInfo flex">
