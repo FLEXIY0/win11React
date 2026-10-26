@@ -14,12 +14,7 @@ import {
   WidPane,
 } from "./components/start";
 import Taskbar from "./components/taskbar";
-import {
-  Background,
-  BootScreen,
-  LockScreen,
-  WelcomeToast,
-} from "./containers/background";
+import { Background, BootScreen, LockScreen } from "./containers/background";
 
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
@@ -166,7 +161,6 @@ function App() {
             <CalnWid />
           </div>
           <Taskbar />
-          <WelcomeToast />
           <ActMenu />
         </div>
       </ErrorBoundary>

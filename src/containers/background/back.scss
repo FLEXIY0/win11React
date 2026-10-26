@@ -348,31 +348,27 @@
   }
 }
 
-// Уведомление Windows 11: вход — Fluent «fast out, slow in»,
-// выход — ускоряющаяся кривая, как в WinUI (learn.microsoft.com, timing and easing)
+// Уведомление Windows 11 (тёмная тема экрана блокировки): ширина 364 px,
+// значок 48×48 (learn.microsoft.com, App notification content);
+// вход — Fluent «fast out, slow in», выход — ускоряющаяся кривая
 .winToast {
-  --toast-bg: rgba(243, 243, 243, 0.92);
-  --toast-txt: #1b1b1b;
-  --toast-sub: rgba(0, 0, 0, 0.62);
-  --toast-hover: rgba(0, 0, 0, 0.06);
-  --toast-border: rgba(0, 0, 0, 0.08);
-
   position: absolute;
-  right: 12px;
-  bottom: 60px;
-  z-index: 10000;
+  right: 16px;
+  bottom: 56px;
+  z-index: 10;
   width: 364px;
-  max-width: calc(100vw - 24px);
-  padding: 12px 14px 16px;
-  color: var(--toast-txt);
-  background: var(--toast-bg);
+  max-width: calc(100vw - 32px);
+  padding: 0 0 16px;
+  color: #fff;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  background: rgba(44, 44, 44, 0.96);
   backdrop-filter: blur(30px) saturate(125%);
-  border: 1px solid var(--toast-border);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.14),
-    0 0 2px rgba(0, 0, 0, 0.18);
-  transform: translateX(calc(100% + 24px));
+    0 32px 64px rgba(0, 0, 0, 0.37),
+    0 2px 21px rgba(0, 0, 0, 0.37);
+  transform: translateX(calc(100% + 32px));
   opacity: 0;
   pointer-events: none;
   transition:
@@ -391,45 +387,63 @@
   .winToastHead {
     display: flex;
     align-items: center;
-    gap: 8px;
+    height: 40px;
+    padding: 0 4px 0 16px;
     font-size: 12px;
-    color: var(--toast-sub);
+    color: rgba(255, 255, 255, 0.79);
   }
 
-  .winToastClose {
+  .winToastApp {
+    margin-left: 8px;
+    flex-grow: 1;
+  }
+
+  .winToastBtn {
     display: grid;
     place-items: center;
-    width: 28px;
-    height: 24px;
-    margin-left: auto;
+    width: 32px;
+    height: 32px;
     border-radius: 4px;
+    color: rgba(255, 255, 255, 0.79);
     cursor: pointer;
 
     &:hover {
-      background: var(--toast-hover);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    &:active {
+      background: rgba(255, 255, 255, 0.04);
     }
   }
 
-  .winToastBody {
-    margin-top: 10px;
+  .winToastVisual {
+    display: flex;
+    gap: 12px;
+    padding: 4px 16px 0;
+  }
+
+  .winToastLogo {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .winToastTexts {
+    min-width: 0;
   }
 
   .winToastTitle {
     font-size: 14px;
     font-weight: 600;
+    line-height: 20px;
   }
 
   .winToastText {
-    margin-top: 2px;
     font-size: 14px;
-    color: var(--toast-sub);
+    line-height: 20px;
+    color: rgba(255, 255, 255, 0.79);
   }
-}
-
-body[data-theme="dark"] .winToast {
-  --toast-bg: rgba(39, 39, 39, 0.92);
-  --toast-txt: #fff;
-  --toast-sub: rgba(255, 255, 255, 0.8);
-  --toast-hover: rgba(255, 255, 255, 0.1);
-  --toast-border: rgba(255, 255, 255, 0.08);
 }
