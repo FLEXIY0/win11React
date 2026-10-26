@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Battery from "../../components/shared/Battery";
 import { Icon } from "../../utils/general";
 import "./back.scss";
 
 const randomDelay = (min, max) => min + Math.random() * (max - min);
+
+// Надписи безопасного режима: по углам и номер сборки сверху
+const SAFE_MODE_BUILD =
+  "Microsoft (R) Windows (R) (Build 26100.ge_release.240331-1435)";
 
 export const Background = () => {
   return (
@@ -13,7 +17,13 @@ export const Background = () => {
       style={{
         backgroundColor: "#000",
       }}
-    ></div>
+    >
+      <div className="safeMode safeTL">Безопасный режим</div>
+      <div className="safeMode safeTR">Безопасный режим</div>
+      <div className="safeMode safeBL">Безопасный режим</div>
+      <div className="safeMode safeBR">Безопасный режим</div>
+      <div className="safeMode safeBuild">{SAFE_MODE_BUILD}</div>
+    </div>
   );
 };
 
@@ -306,19 +316,39 @@ export const LockScreen = (props) => {
   const userName = useSelector((state) => state.setting.person.name);
   const booted = useSelector((state) => state.wallpaper.booted);
   const [time, setTime] = useState(new Date());
-  // после загрузки часы и значки внизу появляются не сразу
+  // после загрузки экран блокировки «просыпается» не сразу: долгая
+  // чернота, часы, короткое мигание, потом значки внизу
+  const bootedAtMount = useRef(booted).current;
+  const ready = useRef(false);
   const [clockOn, setClockOn] = useState(false);
   const [iconsOn, setIconsOn] = useState(false);
+  const [credsOn, setCredsOn] = useState(false);
 
   useEffect(() => {
     if (!booted) return;
-    const t1 = setTimeout(() => setClockOn(true), randomDelay(250, 700));
-    const t2 = setTimeout(() => setIconsOn(true), randomDelay(700, 1400));
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    const timers = [];
+    const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+    const clockAt = bootedAtMount
+      ? randomDelay(400, 900)
+      : randomDelay(2500, 4000);
+    const flickAt = clockAt + randomDelay(600, 1200);
+
+    at(clockAt, () => {
+      ready.current = true;
+      setClockOn(true);
+    });
+    at(flickAt, () => setClockOn(false));
+    at(flickAt + randomDelay(100, 250), () => setClockOn(true));
+    at(clockAt + randomDelay(1000, 2000), () => setIconsOn(true));
+    return () => timers.forEach(clearTimeout);
   }, [booted]);
+
+  // поле пароля подгружается чуть позже аватара и имени
+  useEffect(() => {
+    if (!lock) return;
+    const timer = setTimeout(() => setCredsOn(true), randomDelay(500, 1100));
+    return () => clearTimeout(timer);
+  }, [lock]);
 
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
@@ -326,7 +356,7 @@ export const LockScreen = (props) => {
   }, []);
 
   useEffect(() => {
-    const onKey = () => setLock(true);
+    const onKey = () => ready.current && setLock(true);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
@@ -338,7 +368,7 @@ export const LockScreen = (props) => {
   }, [toast]);
 
   const action = (e) => {
-    if (e.target.dataset.action == "splash") setLock(true);
+    if (e.target.dataset.action == "splash" && ready.current) setLock(true);
   };
 
   const signIn = () => {
@@ -580,7 +610,7 @@ export const LockScreen = (props) => {
               ОК
             </div>
           </>
-        ) : mode == "questions" ? (
+        ) : !credsOn ? null : mode == "questions" ? (
           renderQuestions()
         ) : (
           renderPassword()

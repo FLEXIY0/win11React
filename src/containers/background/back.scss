@@ -512,3 +512,53 @@
     margin-top: 1.4em;
   }
 }
+
+// Безопасный режим: надписи по углам и сборка сверху по центру
+.background {
+  position: relative;
+
+  .safeMode {
+    position: absolute;
+    color: #fff;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .safeTL {
+    top: 6px;
+    left: 8px;
+  }
+
+  .safeTR {
+    top: 6px;
+    right: 8px;
+  }
+
+  .safeBL {
+    bottom: 56px;
+    left: 8px;
+  }
+
+  .safeBR {
+    bottom: 56px;
+    right: 8px;
+  }
+
+  .safeBuild {
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 640px) {
+  .background .safeBuild {
+    top: 26px;
+    font-size: 11px;
+  }
+}
