@@ -447,3 +447,60 @@
     color: rgba(255, 255, 255, 0.79);
   }
 }
+
+// Синий экран (BSOD) Windows 10/11
+.bsod {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  min-width: 100vw;
+  min-height: 100vh;
+  background: #0078d7;
+  color: #fff;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-weight: 300;
+  cursor: none;
+
+  &[data-blackout="true"] {
+    background: #000;
+  }
+
+  .bsodCont {
+    padding: clamp(40px, 11vh, 140px) clamp(24px, 10vw, 220px) 0;
+    max-width: 1500px;
+  }
+
+  .bsodFace {
+    font-size: clamp(90px, 9vw, 190px);
+    line-height: 1;
+    margin-bottom: clamp(16px, 3vh, 40px);
+  }
+
+  .bsodText {
+    font-size: clamp(17px, 1.75vw, 34px);
+    line-height: 1.35;
+    max-width: 52em;
+  }
+
+  .bsodPercent {
+    margin-top: clamp(16px, 3.5vh, 44px);
+  }
+
+  .bsodInfo {
+    display: flex;
+    gap: clamp(12px, 1.2vw, 24px);
+    margin-top: clamp(20px, 4vh, 52px);
+    font-size: clamp(11px, 0.85vw, 17px);
+    line-height: 1.4;
+  }
+
+  .bsodQr {
+    flex-shrink: 0;
+    width: clamp(64px, 5.5vw, 120px);
+    height: clamp(64px, 5.5vw, 120px);
+  }
+
+  .bsodSupport {
+    margin-top: 1.4em;
+  }
+}

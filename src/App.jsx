@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useDispatch, useSelector } from "react-redux";
 import "./i18nextConf";
@@ -14,7 +14,12 @@ import {
   WidPane,
 } from "./components/start";
 import Taskbar from "./components/taskbar";
-import { Background, BootScreen, LockScreen } from "./containers/background";
+import {
+  Background,
+  Bsod,
+  BootScreen,
+  LockScreen,
+} from "./containers/background";
 
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
@@ -122,8 +127,11 @@ function App() {
 
   window.onclick = afterMath;
 
+  // при первом запуске сначала «падает» синий экран
+  const [crashed, setCrashed] = useState(true);
+
   useEffect(() => {
-    if (!window.onstart) {
+    if (!crashed && !window.onstart) {
       loadSettings();
       window.onstart = setTimeout(() => {
         // console.log("prematurely loading ( ﾉ ﾟｰﾟ)ﾉ");
@@ -135,6 +143,7 @@ function App() {
   return (
     <div className="App">
       <ErrorBoundary FallbackComponent={ErrorFallback}>
+        {crashed ? <Bsod onDone={() => setCrashed(false)} /> : null}
         {!wall.booted ? <BootScreen dir={wall.dir} /> : null}
         {wall.locked ? <LockScreen dir={wall.dir} /> : null}
         <div className="appwrap">
