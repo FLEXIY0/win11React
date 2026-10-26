@@ -66,12 +66,23 @@ export const BootScreen = (props) => {
 // Заглушка: пароль для входа на экране блокировки
 const LOCK_PASSWORD = "03112025";
 
+const randomDelay = (min, max) => min + Math.random() * (max - min);
+
+const Spinner = () => (
+  <svg className="progressRing" height={32} width={32} viewBox="0 0 16 16">
+    <circle cx="8px" cy="8px" r="7px"></circle>
+  </svg>
+);
+
 export const LockScreen = (props) => {
   const wall = useSelector((state) => state.wallpaper);
   const [lock, setLock] = useState(false);
   const [unlocked, setUnLock] = useState(false);
   const [password, setPass] = useState("");
   const [wrong, setWrong] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [welcome, setWelcome] = useState(false);
+  const [peek, setPeek] = useState(false);
   const dispatch = useDispatch();
 
   const userName = useSelector((state) => state.setting.person.name);
@@ -93,17 +104,48 @@ export const LockScreen = (props) => {
   };
 
   const proceed = () => {
+    if (checking || welcome) return;
+
+    setPeek(false);
+    setChecking(true);
+
     if (password != LOCK_PASSWORD) {
-      setWrong(true);
-      setPass("");
+      setTimeout(
+        () => {
+          setChecking(false);
+          setWrong(true);
+          setPass("");
+        },
+        randomDelay(700, 2500),
+      );
       return;
     }
 
-    setUnLock(true);
+    // иногда вход проходит почти сразу, иногда «компьютер задумывается»
+    const think =
+      Math.random() < 0.3 ? randomDelay(200, 600) : randomDelay(800, 3000);
+
     setTimeout(() => {
-      dispatch({ type: "WALLUNLOCK" });
-    }, 1000);
+      setChecking(false);
+      setWelcome(true);
+      setTimeout(
+        () => {
+          setUnLock(true);
+          setTimeout(() => {
+            dispatch({ type: "WALLUNLOCK" });
+          }, 1000);
+        },
+        randomDelay(1200, 3500),
+      );
+    }, think);
   };
+
+  const peekOn = (e) => {
+    e.preventDefault();
+    setPeek(true);
+  };
+
+  const peekOff = () => setPeek(false);
 
   const action2 = (e) => {
     if (e.key == "Enter") proceed();
@@ -148,7 +190,16 @@ export const LockScreen = (props) => {
         <div className="mt-5 text-2xl font-medium text-gray-200">
           {userName}
         </div>
-        {wrong ? (
+        {welcome ? (
+          <div className="flex items-center mt-6 gap-4 text-xl text-gray-100">
+            <Spinner />
+            Добро пожаловать
+          </div>
+        ) : checking ? (
+          <div className="mt-6">
+            <Spinner />
+          </div>
+        ) : wrong ? (
           <>
             <div className="mt-6 text-sm text-gray-100">
               Неверный пароль. Попробуйте ещё раз.
@@ -164,13 +215,29 @@ export const LockScreen = (props) => {
           <div className="passBox mt-6">
             {lock ? (
               <input
-                type="password"
+                type={peek ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPass(e.target.value)}
                 onKeyDown={action2}
                 placeholder="Пароль"
                 autoFocus
               />
+            ) : null}
+            {password.length ? (
+              <div
+                className="passEye"
+                title="Показать пароль"
+                onPointerDown={peekOn}
+                onPointerUp={peekOff}
+                onPointerLeave={peekOff}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 5C6.5 5 2.7 9.4 1.6 11.4a1.3 1.3 0 0 0 0 1.2C2.7 14.6 6.5 19 12 19s9.3-4.4 10.4-6.4a1.3 1.3 0 0 0 0-1.2C21.3 9.4 17.5 5 12 5Zm0 12.5c-4.5 0-7.8-3.6-8.9-5.5C4.2 10.1 7.5 6.5 12 6.5s7.8 3.6 8.9 5.5c-1.1 1.9-4.4 5.5-8.9 5.5ZM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 6.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
             ) : null}
             <div className="passGo" onClick={proceed}>
               <Icon fafa="faArrowRight" width={14} />

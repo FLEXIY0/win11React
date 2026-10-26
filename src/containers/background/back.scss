@@ -138,6 +138,26 @@
       }
     }
 
+    .passEye {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 26px;
+      border-radius: 3px;
+      color: #fff;
+      cursor: pointer;
+      user-select: none;
+      touch-action: none;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      &:active {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+
     .passGo {
       display: grid;
       place-items: center;
