@@ -6,7 +6,7 @@ import "./back.scss";
 
 const randomDelay = (min, max) => min + Math.random() * (max - min);
 
-// Надписи безопасного режима: по углам и номер сборки сверху
+// Надписи безопасного режима: в правом нижнем углу и номер сборки сверху
 const SAFE_MODE_BUILD =
   "Microsoft (R) Windows (R) (Build 26100.ge_release.240331-1435)";
 
@@ -18,9 +18,6 @@ export const Background = () => {
         backgroundColor: "#000",
       }}
     >
-      <div className="safeMode safeTL">Безопасный режим</div>
-      <div className="safeMode safeTR">Безопасный режим</div>
-      <div className="safeMode safeBL">Безопасный режим</div>
       <div className="safeMode safeBR">Безопасный режим</div>
       <div className="safeMode safeBuild">{SAFE_MODE_BUILD}</div>
     </div>

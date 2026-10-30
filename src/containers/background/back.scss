@@ -512,7 +512,7 @@
   }
 }
 
-// Безопасный режим: надписи по углам и сборка сверху по центру
+// Безопасный режим: надпись в правом нижнем углу и сборка сверху по центру
 .background {
   position: relative;
 
@@ -524,21 +524,6 @@
     line-height: 1;
     pointer-events: none;
     user-select: none;
-  }
-
-  .safeTL {
-    top: 6px;
-    left: 8px;
-  }
-
-  .safeTR {
-    top: 6px;
-    right: 8px;
-  }
-
-  .safeBL {
-    bottom: 56px;
-    left: 8px;
   }
 
   .safeBR {
@@ -557,7 +542,6 @@
 
 @media (max-width: 640px) {
   .background .safeBuild {
-    top: 26px;
     font-size: 11px;
   }
 }
