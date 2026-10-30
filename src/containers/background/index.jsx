@@ -24,14 +24,16 @@ export const Background = () => {
   );
 };
 
-// Крутящиеся точки экрана входа Windows; анимация по CSS-Windows-Loader
-// (github.com/JkDevArg/CSS-Windows-Loader, MIT)
-const Spinner = ({ size = 22 }) => (
-  <div className="winSpinner" style={{ "--size": size + "px" }}>
-    {[0, 1, 2, 3, 4].map((i) => (
-      <i key={i} />
-    ))}
-  </div>
+// Кольцо загрузки Windows 11 — одно и то же на загрузке и при входе
+const Spinner = ({ size = 48 }) => (
+  <svg
+    className="progressRing"
+    height={size}
+    width={size}
+    viewBox="0 0 16 16"
+  >
+    <circle cx="8px" cy="8px" r="7px"></circle>
+  </svg>
 );
 
 const BootLogo = () => (
@@ -199,14 +201,7 @@ export const BootScreen = (props) => {
       >
         <BootLogo />
         <div className="mt-48" id="loader" data-hide={!ring}>
-          <svg
-            className="progressRing"
-            height={48}
-            width={48}
-            viewBox="0 0 16 16"
-          >
-            <circle cx="8px" cy="8px" r="7px"></circle>
-          </svg>
+          <Spinner />
         </div>
       </div>
     </div>
@@ -584,14 +579,14 @@ export const LockScreen = (props) => {
         </div>
         {welcome ? (
           <div className="flex flex-col items-center mt-6">
-            <Spinner />
+            <Spinner size={40} />
             <div className="mt-6 text-lg font-medium text-gray-100">
               Добро пожаловать
             </div>
           </div>
         ) : checking ? (
           <div className="mt-6">
-            <Spinner />
+            <Spinner size={40} />
           </div>
         ) : wrong ? (
           <>
