@@ -1,369 +1,20 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { WinToast } from "../background";
 import {
-  BROKEN_FILES,
-  CONFIG_FIX,
-  FINAL_TOAST,
-  HARD_TIMES,
-  HER,
-  LETTER,
-  LOVE_FILE,
-  MEMORIES,
-  PAIRS,
-  QUIZ,
+  AFFECTED,
+  ERROR_PATH,
+  IDENTITY,
+  MEMORY_BLOCKS,
+  NOTEPAD_FILE,
+  NOTEPAD_TEXT,
+  RESTORED_FILES,
+  RESTORE_POINTS,
+  USER,
 } from "./data";
+import { PuzzlePicture } from "./picture";
 import "./recovery.scss";
 
 const randomDelay = (min, max) => min + Math.random() * (max - min);
-
-const NOISE = "█▓▒░#%&@$*?";
-
-// «Битый» текст, который восстанавливается слева направо
-const useDecode = (text, duration, start) => {
-  const [shown, setShown] = useState(0);
-
-  useEffect(() => {
-    if (!start) return;
-    const tick = 30;
-    const step = Math.max(1, Math.ceil(text.length / (duration / tick)));
-    let cur = 0;
-    const timer = setInterval(() => {
-      cur = Math.min(text.length, cur + step);
-      setShown(cur);
-      if (cur >= text.length) clearInterval(timer);
-    }, tick);
-    return () => clearInterval(timer);
-  }, [start]);
-
-  const rest = text
-    .slice(shown)
-    .replace(/\S/gu, () => NOISE[Math.floor(Math.random() * NOISE.length)]);
-  return [text.slice(0, shown) + rest, shown >= text.length];
-};
-
-// Текст печатается по буквам; клик дописывает сразу
-const useTypewriter = (text, speed = 35) => {
-  const [shown, setShown] = useState(0);
-
-  useEffect(() => {
-    if (shown >= text.length) return;
-    const ch = text[shown];
-    let wait = speed;
-    if (ch == "\n") wait = speed * 8;
-    else if (/[.,—!?]/.test(ch)) wait = speed * 6;
-    const timer = setTimeout(() => setShown(shown + 1), wait);
-    return () => clearTimeout(timer);
-  }, [shown]);
-
-  const skip = () => setShown(text.length);
-  return [text.slice(0, shown), shown >= text.length, skip];
-};
-
-// Действие, которое становится доступным через ms
-const useReadyAfter = (ms, deps = []) => {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setReady(false);
-    const timer = setTimeout(() => setReady(true), ms);
-    return () => clearTimeout(timer);
-  }, deps);
-
-  return ready;
-};
-
-const ErrorIcon = ({ size = 32 }) => (
-  <svg width={size} height={size} viewBox="0 0 32 32">
-    <circle cx="16" cy="16" r="15" fill="#ff99a4" />
-    <path
-      d="M11 11l10 10M21 11L11 21"
-      stroke="#000"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
-const CheckIcon = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 16 16">
-    <circle cx="8" cy="8" r="8" fill="#6ccb5f" />
-    <path
-      d="M4.5 8.2l2.2 2.2 4.8-4.8"
-      stroke="#000"
-      strokeWidth="1.6"
-      fill="none"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const RecoveryIcon = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 16 16">
-    <path
-      d="M8 1.5a6.5 6.5 0 1 1-6.2 4.6"
-      stroke="#60cdff"
-      strokeWidth="1.6"
-      fill="none"
-      strokeLinecap="round"
-    />
-    <path d="M1.2 2.2l.6 4.1 4-1.1z" fill="#60cdff" />
-    <path
-      d="M8 4.5V8l2.4 1.6"
-      stroke="#fff"
-      strokeWidth="1.4"
-      fill="none"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
-const Button = ({ accent, disabled, onClick, children }) => (
-  <div
-    className={"recBtn" + (accent ? " recBtnAccent" : "")}
-    data-disabled={!!disabled}
-    onClick={disabled ? null : onClick}
-  >
-    {children}
-  </div>
-);
-
-const useShake = () => {
-  const [shake, setShake] = useState(false);
-  const run = () => {
-    setShake(true);
-    setTimeout(() => setShake(false), 450);
-  };
-  return [shake, run];
-};
-
-// Окно ошибки Windows: повреждены системные файлы
-const CorruptionError = ({ onRepair }) => {
-  const [refused, setRefused] = useState(0);
-  const [shake, runShake] = useShake();
-
-  const close = () => {
-    setRefused(refused + 1);
-    runShake();
-  };
-
-  return (
-    <div className="recOverlay">
-      <div className="recShake" data-shake={shake}>
-        <div className="recDialog">
-          <div className="recTitleBar">
-            <span>Windows</span>
-            <div className="recTitleBtn" onClick={close}>
-              ✕
-            </div>
-          </div>
-          <div className="recDialogBody">
-            <div className="recDialogIcon">
-              <ErrorIcon />
-            </div>
-            <div>
-              <div className="recDialogTitle">Повреждены системные файлы</div>
-              <div className="recText">
-                Windows не может продолжить работу: повреждены важные файлы
-                памяти. Не удалось загрузить:
-              </div>
-              <div className="recFileList">
-                {BROKEN_FILES.slice(0, 5).map((f) => (
-                  <div key={f}>{f}</div>
-                ))}
-                <div className="recMuted">…и ещё {BROKEN_FILES.length - 5}</div>
-              </div>
-              <div className="recText">
-                Рекомендуется запустить восстановление системы.
-              </div>
-              {refused ? (
-                <div className="recRefused">
-                  {refused == 1
-                    ? "Закрыть не получится: без этих файлов система не запустится."
-                    : "Ну правда, они очень важные 🙂"}
-                </div>
-              ) : null}
-            </div>
-          </div>
-          <div className="recDialogFoot">
-            <Button accent onClick={onRepair}>
-              Восстановить систему
-            </Button>
-            <Button onClick={close}>Закрыть</Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const IntroStep = ({ next }) => (
-  <div className="recStep">
-    <div className="recBigIcon">
-      <RecoveryIcon size={56} />
-    </div>
-    <div className="recH1">Мастер восстановления системы</div>
-    <div className="recText">
-      {HER}, похоже, в системе повреждены очень важные файлы — наши
-      воспоминания. Мастер поможет восстановить их по одному.
-    </div>
-    <div className="recText recMuted">
-      Не закрывай окно и не выключай компьютер.
-    </div>
-    <div className="recActions">
-      <Button accent onClick={next}>
-        Начать восстановление
-      </Button>
-    </div>
-  </div>
-);
-
-const SCAN_OK = [
-  "C:\\Windows\\System32\\kernel32.dll",
-  "C:\\Windows\\System32\\ntoskrnl.exe",
-  "C:\\Windows\\System32\\drivers\\acpi.sys",
-  "C:\\Windows\\System32\\winlogon.exe",
-  "C:\\Windows\\Fonts\\segoeui.ttf",
-];
-
-const ScanStep = ({ next }) => {
-  // вперемешку: системные файлы целы, наши — повреждены
-  const lines = useMemo(() => {
-    const out = [];
-    let i = 0;
-    BROKEN_FILES.forEach((f, k) => {
-      if (k % 2 == 0 && SCAN_OK[i]) out.push({ path: SCAN_OK[i++] });
-      out.push({ path: "C:\\Память\\" + f, bad: true });
-    });
-    while (SCAN_OK[i]) out.push({ path: SCAN_OK[i++] });
-    return out;
-  }, []);
-
-  const [count, setCount] = useState(0);
-  const logRef = useRef();
-
-  useEffect(() => {
-    if (count >= lines.length) return;
-    const wait = count == 0 ? 1200 : randomDelay(250, 750);
-    const timer = setTimeout(() => setCount(count + 1), wait);
-    return () => clearTimeout(timer);
-  }, [count]);
-
-  useEffect(() => {
-    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
-  }, [count]);
-
-  const done = count >= lines.length;
-  const percent = Math.round((count / lines.length) * 100);
-
-  return (
-    <div className="recStep">
-      <div className="recH2">Сканирование системы</div>
-      <div className="recText recMuted">
-        {done ? "Сканирование завершено" : `Проверка файлов… ${percent}%`}
-      </div>
-      <div className="recProgress">
-        <div style={{ width: percent + "%" }} />
-      </div>
-      <div className="recLog" ref={logRef}>
-        {lines.slice(0, count).map((l) => (
-          <div key={l.path} className="recLogLine">
-            <span className="recLogPath">{l.path}</span>
-            <span className={l.bad ? "recBad" : "recOk"}>
-              {l.bad ? "повреждён" : "OK"}
-            </span>
-          </div>
-        ))}
-      </div>
-      {done ? (
-        <div className="recText">
-          Обнаружено повреждённых файлов: <b>{BROKEN_FILES.length}</b>. Все они
-          очень важны.
-        </div>
-      ) : null}
-      <div className="recActions">
-        <Button accent disabled={!done} onClick={next}>
-          Восстановить
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-// Карточка файла: сначала «повреждён», потом текст восстанавливается
-const FileCard = ({ icon, file, caption, text, onDone }) => {
-  const restoring = useReadyAfter(1000);
-  const [shown, done] = useDecode(text, 2800, restoring);
-
-  useEffect(() => {
-    if (done && onDone) onDone();
-  }, [done]);
-
-  return (
-    <div className="recCard" data-done={done}>
-      <div className="recCardHead">
-        <div className="recCardIcon">{icon}</div>
-        <div className="recCardName">
-          <div className="recMono">{file}</div>
-          {caption ? <div className="recMuted recSmall">{caption}</div> : null}
-        </div>
-        <div className="recCardStatus">
-          {done ? (
-            <>
-              <CheckIcon /> Восстановлено
-            </>
-          ) : restoring ? (
-            <span className="recMuted">Восстановление…</span>
-          ) : (
-            <span className="recBad">Повреждён</span>
-          )}
-        </div>
-      </div>
-      <div className="recCardText">{shown}</div>
-      <div className="recProgress recProgressThin" data-hide={done}>
-        <div className="recProgressRun" data-run={restoring} />
-      </div>
-    </div>
-  );
-};
-
-const MemoriesStep = ({ next }) => {
-  const [idx, setIdx] = useState(0);
-  const [done, setDone] = useState(false);
-  const mem = MEMORIES[idx];
-  const last = idx == MEMORIES.length - 1;
-
-  const go = () => {
-    if (last) return next();
-    setDone(false);
-    setIdx(idx + 1);
-  };
-
-  return (
-    <div className="recStep">
-      <div className="recH2">Восстановление памяти</div>
-      <div className="recDots">
-        {MEMORIES.map((m, i) => (
-          <i key={i} data-state={i < idx ? "done" : i == idx ? "cur" : ""} />
-        ))}
-      </div>
-      <FileCard
-        key={idx}
-        icon={mem.icon}
-        file={mem.file}
-        caption={`Сектор ${idx + 1} из ${MEMORIES.length}`}
-        text={mem.text}
-        onDone={() => setDone(true)}
-      />
-      <div className="recActions">
-        <Button accent disabled={!done} onClick={go}>
-          {last ? "Далее" : "Следующий файл"}
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 const shuffle = (arr) => {
   const a = [...arr];
@@ -374,410 +25,867 @@ const shuffle = (arr) => {
   return a;
 };
 
-// «Мемори»: найти пары, каждая пара восстанавливает сектор
-const GamesStep = ({ next }) => {
-  const cards = useMemo(
-    () => shuffle([...PAIRS, ...PAIRS].map((p, i) => ({ ...p, id: i }))),
-    [],
-  );
-  const [open, setOpen] = useState([]);
-  const [found, setFound] = useState([]);
-  const [caption, setCaption] = useState(null);
-
-  const flip = (i) => {
-    if (open.length == 2 || open.includes(i)) return;
-    if (found.includes(cards[i].icon)) return;
-    const now = [...open, i];
-    setOpen(now);
-    if (now.length < 2) return;
-
-    const [a, b] = now.map((k) => cards[k]);
-    if (a.icon == b.icon) {
-      setTimeout(() => {
-        setFound((f) => [...f, a.icon]);
-        setCaption(a);
-        setOpen([]);
-      }, 450);
-    } else {
-      setTimeout(() => setOpen([]), 900);
-    }
-  };
-
-  const done = found.length == PAIRS.length;
-
-  return (
-    <div className="recStep">
-      <div className="recH2">Восстановление игр</div>
-      <div className="recText recMuted">
-        Сектор «Игры» повреждён. Найди все пары, чтобы восстановить его.
-      </div>
-      <div className="recGame">
-        {cards.map((c, i) => {
-          const isFound = found.includes(c.icon);
-          const isOpen = isFound || open.includes(i);
-          return (
-            <div
-              key={c.id}
-              className="recGameCard"
-              data-open={isOpen}
-              data-found={isFound}
-              onClick={() => flip(i)}
-            >
-              <div className="recGameInner">
-                <div className="recGameBack">?</div>
-                <div className="recGameFront">{c.icon}</div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="recGameCaption">
-        {caption ? (
-          <>
-            <span className="recEmoji">{caption.icon}</span> {caption.caption}
-          </>
-        ) : (
-          <span className="recMuted">
-            Восстановлено пар: 0 из {PAIRS.length}
-          </span>
-        )}
-      </div>
-      <div className="recActions">
-        <span className="recMuted recSmall">
-          {done
-            ? "Сектор восстановлен"
-            : `Восстановлено пар: ${found.length} из ${PAIRS.length}`}
-        </span>
-        <Button accent disabled={!done} onClick={next}>
-          Далее
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-const QuizStep = ({ next }) => {
-  const [idx, setIdx] = useState(0);
-  const [wrong, setWrong] = useState([]);
-  const [answer, setAnswer] = useState(null);
-  const [shake, runShake] = useShake();
-  const q = QUIZ[idx];
-  const last = idx == QUIZ.length - 1;
-
-  const pick = (i) => {
-    if (answer != null) return;
-    if (i == q.ok || (q.accepted && q.accepted[i])) {
-      setAnswer(i);
-    } else {
-      setWrong([...wrong, i]);
-      runShake();
-    }
-  };
-
-  const go = () => {
-    if (last) return next();
-    setIdx(idx + 1);
-    setWrong([]);
-    setAnswer(null);
-  };
-
-  let message = null;
-  if (answer != null) {
-    message =
-      answer == q.ok ? (
-        <>
-          <CheckIcon /> Целостность подтверждена
-        </>
-      ) : (
-        q.accepted[answer]
-      );
-  } else if (wrong.length) message = q.wrong;
-
-  return (
-    <div className="recStep">
-      <div className="recH2">Проверка целостности</div>
-      <div className="recText recMuted">
-        Вопрос {idx + 1} из {QUIZ.length}. Система проверяет, что все
-        воспоминания на месте.
-      </div>
-      <div className="recQuestion">{q.question}</div>
-      <div className="recOptions" data-shake={shake}>
-        {q.options.map((o, i) => (
-          <div
-            key={idx + "-" + i}
-            className="recOption"
-            data-state={answer == i ? "ok" : wrong.includes(i) ? "wrong" : ""}
-            onClick={() => pick(i)}
-          >
-            {o}
-          </div>
-        ))}
-      </div>
-      <div className="recQuizMessage" data-ok={answer != null}>
-        {message}
-      </div>
-      <div className="recActions">
-        <Button accent disabled={answer == null} onClick={go}>
-          {last ? "Далее" : "Следующий вопрос"}
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-// Исправление «бага» в настройках: старые строки вычёркиваются,
-// новые появляются по одной
-const ConfigFix = ({ onDone }) => {
-  const [stage, setStage] = useState(0);
-
-  useEffect(() => {
-    const total = 2 + CONFIG_FIX.added.length;
-    if (stage >= total) {
-      onDone();
-      return;
-    }
-    const wait = stage == 0 ? 1600 : stage == 1 ? 1400 : 700;
-    const timer = setTimeout(() => setStage(stage + 1), wait);
-    return () => clearTimeout(timer);
-  }, [stage]);
-
-  return (
-    <div className="recCard" data-done={stage >= 2 + CONFIG_FIX.added.length}>
-      <div className="recCardHead">
-        <div className="recCardIcon">⚙️</div>
-        <div className="recCardName">
-          <div className="recMono">{CONFIG_FIX.file}</div>
-          <div className="recMuted recSmall">Файл настроек</div>
-        </div>
-        <div className="recCardStatus">
-          {stage >= 2 + CONFIG_FIX.added.length ? (
-            <>
-              <CheckIcon /> Исправлено
-            </>
-          ) : stage >= 1 ? (
-            <span className="recMuted">Исправление…</span>
-          ) : (
-            <span className="recBad">Ошибка</span>
-          )}
-        </div>
-      </div>
-      <div className="recCardText">{CONFIG_FIX.problem}</div>
-      <div className="recDiff">
-        {CONFIG_FIX.removed.map((l) => (
-          <div key={l} className="recDiffDel" data-struck={stage >= 1}>
-            − {l}
-          </div>
-        ))}
-        {CONFIG_FIX.added.slice(0, Math.max(0, stage - 1)).map((l) => (
-          <div key={l} className="recDiffAdd">
-            + {l}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const SystemStep = ({ next }) => {
-  const [stage, setStage] = useState(0);
-  const [done, setDone] = useState(false);
-
-  const go = () => {
-    if (stage == 1) return next();
-    setDone(false);
-    setStage(1);
-  };
-
-  return (
-    <div className="recStep">
-      <div className="recH2">Системные файлы</div>
-      <div className="recText recMuted">
-        Осталось несколько критически важных файлов.
-      </div>
-      {stage == 0 ? (
-        <FileCard
-          icon="💛"
-          file={HARD_TIMES.file}
-          caption="Критический системный файл"
-          text={HARD_TIMES.text}
-          onDone={() => setDone(true)}
-        />
-      ) : (
-        <ConfigFix onDone={() => setDone(true)} />
-      )}
-      <div className="recActions">
-        <Button accent disabled={!done} onClick={go}>
-          Далее
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-const Letter = ({ onDone }) => {
-  const [text, done, skip] = useTypewriter(LETTER);
-
-  useEffect(() => {
-    if (done) onDone();
-  }, [done]);
-
-  return (
-    <div className="recLetter" onClick={skip}>
-      <div className="recLetterBar">{LOVE_FILE} — Блокнот</div>
-      <div className="recLetterText">
-        {text}
-        {done ? null : <span className="recCaret" />}
-      </div>
-    </div>
-  );
-};
-
-const LoveStep = ({ next }) => {
-  const checked = useReadyAfter(3200);
-  const [opened, setOpened] = useState(false);
-  const [read, setRead] = useState(false);
-
-  if (opened) {
+// Значки классических окон сообщений Windows
+const MsgIcon = ({ type, size = 32 }) => {
+  if (type == "error") {
     return (
-      <div className="recStep">
-        <Letter onDone={() => setRead(true)} />
-        <div className="recActions">
-          <Button accent disabled={!read} onClick={next}>
-            Завершить восстановление
-          </Button>
+      <svg width={size} height={size} viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="15" fill="#c42b1c" />
+        <path
+          d="M11 11l10 10M21 11L11 21"
+          stroke="#fff"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  if (type == "question") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="15" fill="#0067c0" />
+        <text
+          x="16"
+          y="22.5"
+          fontSize="19"
+          fontWeight="600"
+          fill="#fff"
+          textAnchor="middle"
+          fontFamily="Segoe UI, sans-serif"
+        >
+          ?
+        </text>
+      </svg>
+    );
+  }
+  if (type == "shield") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 32 32">
+        <path
+          d="M16 2l12 4.5v8.5c0 7.5-5.2 13-12 15C9.2 28 4 22.5 4 15V6.5z"
+          fill="#0067c0"
+        />
+        <path
+          d="M16 2v28C9.2 28 4 22.5 4 15V6.5z"
+          fill="#2b88d8"
+          opacity="0.9"
+        />
+        <path
+          d="M11 16l3.5 3.5 7-7"
+          stroke="#fff"
+          strokeWidth="2.4"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  // info
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="15" fill="#0067c0" />
+      <rect x="14.6" y="13.5" width="2.8" height="10" rx="1.2" fill="#fff" />
+      <circle cx="16" cy="9.6" r="1.8" fill="#fff" />
+    </svg>
+  );
+};
+
+// Значок «Восстановления системы»: часы со стрелкой назад
+const RestoreIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32">
+    <circle
+      cx="17"
+      cy="17"
+      r="12"
+      fill="#fff"
+      stroke="#3a7bd5"
+      strokeWidth="2"
+    />
+    <path
+      d="M17 10v7l5 3"
+      stroke="#2b2b2b"
+      strokeWidth="2"
+      fill="none"
+      strokeLinecap="round"
+    />
+    <path
+      d="M5.5 8.5A13.5 13.5 0 0 1 17 3.5"
+      stroke="#2e9e3e"
+      strokeWidth="2.6"
+      fill="none"
+      strokeLinecap="round"
+    />
+    <path d="M2.5 5l7.5 1-4.5 6z" fill="#2e9e3e" />
+  </svg>
+);
+
+const NotepadIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16">
+    <rect
+      x="2.5"
+      y="1.5"
+      width="11"
+      height="13"
+      rx="1.5"
+      fill="#fff"
+      stroke="#5d9ad6"
+    />
+    <rect x="2.5" y="1.5" width="11" height="3" rx="1.5" fill="#5d9ad6" />
+    <path d="M5 7.5h6M5 9.5h6M5 11.5h4" stroke="#7a8794" strokeWidth="0.9" />
+  </svg>
+);
+
+// Окно Windows 11 со светлой рамкой; перетаскивается за заголовок
+const Win = ({
+  title,
+  icon,
+  width,
+  onClose,
+  className = "",
+  bodyClass = "",
+  children,
+  z = 0,
+}) => {
+  const [pos, setPos] = useState([0, 0]);
+  const drag = useRef(null);
+
+  const down = (e) => {
+    if (e.target.closest(".rcClose")) return;
+    drag.current = [e.clientX - pos[0], e.clientY - pos[1]];
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const move = (e) => {
+    if (!drag.current) return;
+    setPos([e.clientX - drag.current[0], e.clientY - drag.current[1]]);
+  };
+  const up = () => (drag.current = null);
+
+  return (
+    <div className="rcLayer" style={{ zIndex: 1000 + z }}>
+      <div
+        className={"rcWin " + className}
+        style={{
+          width,
+          transform: `translate(${pos[0]}px, ${pos[1]}px)`,
+        }}
+      >
+        <div
+          className="rcTitle"
+          onPointerDown={down}
+          onPointerMove={move}
+          onPointerUp={up}
+        >
+          {icon}
+          <span className="rcTitleText">{title}</span>
+          <div className="rcClose" onClick={onClose}>
+            <svg width="10" height="10" viewBox="0 0 10 10">
+              <path d="M0.5 0.5l9 9M9.5 0.5l-9 9" stroke="currentColor" />
+            </svg>
+          </div>
+        </div>
+        <div className={"rcBody " + bodyClass}>{children}</div>
+      </div>
+    </div>
+  );
+};
+
+const Btn = ({ def, disabled, onClick, children }) => (
+  <button
+    className="rcBtn"
+    data-default={!!def}
+    disabled={disabled}
+    onClick={onClick}
+  >
+    {children}
+  </button>
+);
+
+// Классическое окно сообщения
+const MsgBox = ({ title, icon, buttons, onClose, z = 10, children }) => (
+  <Win title={title} width={420} onClose={onClose} z={z}>
+    <div className="rcMsg">
+      <MsgIcon type={icon} />
+      <div className="rcMsgText">{children}</div>
+    </div>
+    <div className="rcFoot">
+      {buttons.map((b, i) => (
+        <Btn key={b.label} def={i == 0} onClick={b.onClick}>
+          {b.label}
+        </Btn>
+      ))}
+    </div>
+  </Win>
+);
+
+// Окно ошибки на рабочем столе
+const CorruptionError = ({ onRestore, onClose }) => (
+  <MsgBox
+    title="Расположение недоступно"
+    icon="error"
+    onClose={onClose}
+    z={0}
+    buttons={[
+      { label: "Восстановление системы", onClick: onRestore },
+      { label: "Закрыть", onClick: onClose },
+    ]}
+  >
+    <p>Нет доступа к {ERROR_PATH}.</p>
+    <p>Файл или папка повреждены. Чтение невозможно. (0x80070570)</p>
+    <p>
+      Повреждены данные профиля {USER}. Чтобы устранить неполадку, запустите
+      восстановление системы.
+    </p>
+  </MsgBox>
+);
+
+// Мастер «Восстановление системы» (rstrui.exe)
+const Wizard = ({ onCancel, onStart }) => {
+  const [page, setPage] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [showAll, setShowAll] = useState(false);
+  const [dialog, setDialog] = useState(null);
+
+  const points = showAll
+    ? RESTORE_POINTS
+    : RESTORE_POINTS.filter((p) => p.type != "Система");
+  const point = selected != null ? RESTORE_POINTS[selected] : null;
+  const special = RESTORE_POINTS.find((p) => p.ok);
+
+  const next = () => {
+    if (page == 1 && !point.ok) return setDialog("badPoint");
+    setPage(page + 1);
+  };
+
+  const side = (
+    <div className="rcWizSide">
+      <RestoreIcon size={72} />
+    </div>
+  );
+
+  let content = null;
+  if (page == 0) {
+    content = (
+      <div className="rcWizSplit">
+        {side}
+        <div className="rcWizMain">
+          <div className="rcWizHead">
+            Восстановление системных файлов и параметров
+          </div>
+          <p>
+            Восстановление системы может устранить многие неполадки, которые
+            замедляют работу компьютера или препятствуют его нормальной работе.
+          </p>
+          <p>
+            Восстановление системы не затрагивает документы, изображения и
+            другие личные данные. Недавно установленные программы и драйверы
+            могут быть удалены.
+          </p>
+        </div>
+      </div>
+    );
+  } else if (page == 1) {
+    content = (
+      <div className="rcWizMain">
+        <div className="rcWizHead">
+          Восстановление компьютера до предшествующего состояния
+        </div>
+        <p>Текущий часовой пояс: GMT+3:00</p>
+        <div className="rcTable">
+          <div className="rcRow rcRowHead">
+            <span>Дата и время</span>
+            <span>Описание</span>
+            <span>Тип</span>
+          </div>
+          <div className="rcTableBody">
+            {points.map((p) => {
+              const i = RESTORE_POINTS.indexOf(p);
+              return (
+                <div
+                  key={p.date}
+                  className="rcRow"
+                  data-selected={selected == i}
+                  onClick={() => setSelected(i)}
+                >
+                  <span>{p.date}</span>
+                  <span>{p.desc}</span>
+                  <span>{p.type}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="rcWizRow">
+          <label className="rcCheck">
+            <input
+              type="checkbox"
+              checked={showAll}
+              onChange={(e) => {
+                setShowAll(e.target.checked);
+                setSelected(null);
+              }}
+            />
+            Показать другие точки восстановления
+          </label>
+          <Btn disabled={!point} onClick={() => setDialog("affected")}>
+            Поиск затрагиваемых программ
+          </Btn>
+        </div>
+      </div>
+    );
+  } else {
+    content = (
+      <div className="rcWizSplit">
+        {side}
+        <div className="rcWizMain">
+          <div className="rcWizHead">Подтверждение точки восстановления</div>
+          <p>
+            Компьютер будет восстановлен до состояния, предшествовавшего событию
+            в поле «Описание».
+          </p>
+          <div className="rcProps">
+            <span>Время:</span>
+            <span>{special.date} (GMT+3:00)</span>
+            <span>Описание:</span>
+            <span>
+              {special.type}: {special.desc}
+            </span>
+            <span>Диски:</span>
+            <span>Локальный диск (C:) (Система)</span>
+          </div>
+          <p>
+            <span className="rcLink" onClick={() => setDialog("affected")}>
+              Проверить затрагиваемые программы
+            </span>
+          </p>
+          <p>
+            Для вступления изменений в силу восстановление системы перезагрузит
+            компьютер. Нажмите кнопку «Готово», чтобы продолжить.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="recStep">
-      <div className="recH2">Последний файл</div>
-      <div className="recCard" data-done={checked}>
-        <div className="recCardHead">
-          <div className="recCardIcon">❤️</div>
-          <div className="recCardName">
-            <div className="recMono">{LOVE_FILE}</div>
-            <div className="recMuted recSmall">Приложение</div>
-          </div>
-          <div className="recCardStatus">
-            {checked ? (
-              <>
-                <CheckIcon /> Не повреждён
-              </>
-            ) : (
-              <span className="recMuted">Проверка…</span>
-            )}
-          </div>
+    <>
+      <Win
+        title="Восстановление системы"
+        icon={<RestoreIcon />}
+        width={620}
+        onClose={onCancel}
+        bodyClass="rcWiz"
+      >
+        <div className="rcWizContent">{content}</div>
+        <div className="rcFoot">
+          <Btn disabled={page == 0} onClick={() => setPage(page - 1)}>
+            &lt; Назад
+          </Btn>
+          {page < 2 ? (
+            <Btn def disabled={page == 1 && !point} onClick={next}>
+              Далее &gt;
+            </Btn>
+          ) : (
+            <Btn def onClick={() => setDialog("confirm")}>
+              Готово
+            </Btn>
+          )}
+          <Btn onClick={onCancel}>Отмена</Btn>
         </div>
-        <div className="recCardText">
-          {checked
-            ? "Этот файл не повреждён. Его невозможно повредить."
-            : "Проверка целостности файла…"}
-        </div>
-        <div className="recProgress recProgressThin" data-hide={checked}>
-          <div className="recProgressRun recProgressSlow" data-run={true} />
-        </div>
-      </div>
-      <div className="recActions">
-        <Button accent disabled={!checked} onClick={() => setOpened(true)}>
-          Открыть {LOVE_FILE}
-        </Button>
-      </div>
-    </div>
+      </Win>
+      {dialog == "badPoint" ? (
+        <MsgBox
+          title="Восстановление системы"
+          icon="error"
+          onClose={() => setDialog(null)}
+          buttons={[{ label: "ОК", onClick: () => setDialog(null) }]}
+        >
+          <p>Не удалось использовать выбранную точку восстановления.</p>
+          <p>
+            Точка восстановления повреждена. (0x80070570) Выберите другую точку
+            восстановления.
+          </p>
+        </MsgBox>
+      ) : null}
+      {dialog == "affected" ? (
+        <Affected point={point || special} onClose={() => setDialog(null)} />
+      ) : null}
+      {dialog == "confirm" ? (
+        <MsgBox
+          title="Восстановление системы"
+          icon="question"
+          onClose={() => setDialog(null)}
+          buttons={[
+            { label: "Да", onClick: onStart },
+            { label: "Нет", onClick: () => setDialog(null) },
+          ]}
+        >
+          <p>
+            После запуска восстановление системы нельзя прервать. Продолжить?
+          </p>
+        </MsgBox>
+      ) : null}
+    </>
   );
 };
 
-const FinishStep = ({ finish }) => (
-  <div className="recStep">
-    <div className="recBigIcon">
-      <CheckIcon size={56} />
-    </div>
-    <div className="recH1">Восстановление завершено</div>
-    <div className="recText">
-      Восстановлено файлов: {BROKEN_FILES.length} из {BROKEN_FILES.length}.
-      Ошибок не найдено.
-    </div>
-    <div className="recText recMuted">
-      Чтобы применить изменения, нужно перезагрузить компьютер.
-    </div>
-    <div className="recActions">
-      <Button accent onClick={finish}>
-        Перезагрузить сейчас
-      </Button>
-    </div>
-  </div>
-);
+const Affected = ({ point, onClose }) => {
+  const [scanned, setScanned] = useState(false);
 
-const STEPS = [
-  { name: "Начало", Comp: IntroStep },
-  { name: "Сканирование", Comp: ScanStep },
-  { name: "Восстановление памяти", Comp: MemoriesStep },
-  { name: "Восстановление игр", Comp: GamesStep },
-  { name: "Проверка целостности", Comp: QuizStep },
-  { name: "Системные файлы", Comp: SystemStep },
-  { name: LOVE_FILE, Comp: LoveStep },
-  { name: "Завершение", Comp: FinishStep },
-];
+  useEffect(() => {
+    const timer = setTimeout(() => setScanned(true), randomDelay(1800, 2800));
+    return () => clearTimeout(timer);
+  }, []);
 
-const Wizard = ({ finish }) => {
-  const [step, setStep] = useState(0);
-  const [shake, runShake] = useShake();
-  const { Comp } = STEPS[step];
+  const list = (rows) => (
+    <div className="rcTable rcTableSmall">
+      <div className="rcRow rcRowHead rcRow2">
+        <span>Описание</span>
+        <span>Тип</span>
+      </div>
+      {rows.map(([name, type]) => (
+        <div key={name} className="rcRow rcRow2">
+          <span>{name}</span>
+          <span>{type}</span>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
-    <div className="recOverlay">
-      <div className="recShake" data-shake={shake}>
-        <div className="recWindow">
-          <div className="recTitleBar">
-            <RecoveryIcon />
-            <span>Восстановление системы</span>
-            <div className="recTitleBtns">
-              <div className="recTitleBtn" onClick={runShake}>
-                —
-              </div>
-              <div className="recTitleBtn" onClick={runShake}>
-                ☐
-              </div>
-              <div className="recTitleBtn" onClick={runShake}>
-                ✕
-              </div>
+    <Win title="Восстановление системы" width={480} onClose={onClose} z={10}>
+      <div className="rcPad">
+        {!scanned ? (
+          <>
+            <p>Поиск затрагиваемых программ и драйверов…</p>
+            <div className="rcBar rcBarMarquee">
+              <div />
             </div>
-          </div>
-          <div className="recWindowBody">
-            <div className="recSide">
-              {STEPS.map((s, i) => (
-                <div
-                  key={s.name}
-                  className="recSideItem"
-                  data-state={i < step ? "done" : i == step ? "cur" : ""}
-                >
-                  <span className="recSideMark">
-                    {i < step ? <CheckIcon size={14} /> : i + 1}
-                  </span>
-                  {s.name}
-                </div>
-              ))}
-            </div>
-            <div className="recMain">
-              <Comp key={step} next={() => setStep(step + 1)} finish={finish} />
-            </div>
-          </div>
+          </>
+        ) : (
+          <>
+            <p>
+              Описание: {point.desc}
+              <br />
+              Дата: {point.date}
+            </p>
+            <p>
+              Будут удалены все программы и драйверы, добавленные после
+              последней точки восстановления:
+            </p>
+            {list(AFFECTED.removed)}
+            <p>Следующие компоненты будут восстановлены:</p>
+            {list(AFFECTED.restored)}
+          </>
+        )}
+      </div>
+      <div className="rcFoot">
+        <Btn def onClick={onClose}>
+          Закрыть
+        </Btn>
+      </div>
+    </Win>
+  );
+};
+
+// Окно хода восстановления: проходит заданные шаги и вызывает onDone
+const Progress = ({ steps, from, to, onDone }) => {
+  const [idx, setIdx] = useState(0);
+  const [percent, setPercent] = useState(from);
+
+  useEffect(() => {
+    if (idx >= steps.length) {
+      onDone();
+      return;
+    }
+    const timer = setTimeout(() => setIdx(idx + 1), steps[idx].ms);
+    return () => clearTimeout(timer);
+  }, [idx]);
+
+  useEffect(() => {
+    const target =
+      from + ((to - from) * Math.min(idx + 1, steps.length)) / steps.length;
+    setPercent(target);
+  }, [idx]);
+
+  const step = steps[Math.min(idx, steps.length - 1)];
+
+  return (
+    <Win
+      title="Восстановление системы"
+      icon={<RestoreIcon />}
+      width={460}
+      onClose={() => {}}
+    >
+      <div className="rcPad">
+        <p>Подождите, идёт восстановление файлов и параметров Windows.</p>
+        <p className="rcStatus">{step.text}</p>
+        <div className="rcBar">
+          <div style={{ width: percent + "%" }} />
         </div>
+      </div>
+    </Win>
+  );
+};
+
+// «Подтверждение владельца профиля»: странные контрольные вопросы
+const Identity = ({ onDone }) => {
+  const [answers, setAnswers] = useState(IDENTITY.map(() => ""));
+  const [error, setError] = useState(false);
+  const [cancel, setCancel] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  const submit = () => {
+    setChecking(true);
+    setError(false);
+    setTimeout(() => {
+      setChecking(false);
+      const ok = IDENTITY.every(
+        (q, i) => q.ok.includes(Number(answers[i])) && answers[i] !== "",
+      );
+      if (ok) onDone();
+      else setError(true);
+    }, randomDelay(900, 1800));
+  };
+
+  return (
+    <>
+      <Win
+        title="Подтверждение владельца профиля"
+        icon={<MsgIcon type="shield" size={16} />}
+        width={520}
+        onClose={() => setCancel(true)}
+      >
+        <div className="rcPad">
+          <div className="rcMsg rcMsgFlat">
+            <MsgIcon type="shield" />
+            <div className="rcMsgText">
+              <p>
+                Для восстановления данных профиля {USER} необходимо подтвердить,
+                что вы являетесь его владельцем.
+              </p>
+              <p>Ответьте на контрольные вопросы.</p>
+            </div>
+          </div>
+          <div className="rcForm">
+            {IDENTITY.map((q, i) => (
+              <React.Fragment key={q.label}>
+                <label htmlFor={"rcQ" + i}>{q.label}</label>
+                <select
+                  id={"rcQ" + i}
+                  value={answers[i]}
+                  onChange={(e) => {
+                    const a = [...answers];
+                    a[i] = e.target.value;
+                    setAnswers(a);
+                  }}
+                >
+                  <option value="">(не выбрано)</option>
+                  {q.options.map((o, k) => (
+                    <option key={o} value={k}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              </React.Fragment>
+            ))}
+          </div>
+          <p className="rcError" data-show={error}>
+            Один или несколько ответов не совпадают с данными профиля.
+          </p>
+        </div>
+        <div className="rcFoot">
+          <Btn
+            def
+            disabled={checking || answers.some((a) => a === "")}
+            onClick={submit}
+          >
+            {checking ? "Проверка…" : "ОК"}
+          </Btn>
+          <Btn onClick={() => setCancel(true)}>Отмена</Btn>
+        </div>
+      </Win>
+      {cancel ? (
+        <MsgBox
+          title="Подтверждение владельца профиля"
+          icon="error"
+          onClose={() => setCancel(false)}
+          buttons={[{ label: "ОК", onClick: () => setCancel(false) }]}
+        >
+          <p>
+            Без подтверждения владельца восстановление профиля {USER}{" "}
+            невозможно.
+          </p>
+        </MsgBox>
+      ) : null}
+    </>
+  );
+};
+
+// «Средство диагностики DirectX»: собрать тестовое изображение
+const DxDiag = ({ onDone }) => {
+  const [order, setOrder] = useState(() => {
+    let o;
+    do o = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    while (o.filter((v, i) => v == i).length > 2);
+    return o;
+  });
+  const [picked, setPicked] = useState(null);
+  const solved = order.every((v, i) => v == i);
+
+  const pick = (i) => {
+    if (solved) return;
+    if (picked == null) return setPicked(i);
+    if (picked != i) {
+      const o = [...order];
+      [o[picked], o[i]] = [o[i], o[picked]];
+      setOrder(o);
+    }
+    setPicked(null);
+  };
+
+  return (
+    <Win
+      title="Средство диагностики DirectX"
+      icon={<MsgIcon type="info" size={16} />}
+      width={440}
+      onClose={() => {}}
+    >
+      <div className="rcPad">
+        <p>
+          {solved
+            ? "Тест DirectDraw завершён. Неполадок не найдено."
+            : "Тестовое изображение повреждено. Восстановите порядок фрагментов, чтобы продолжить проверку DirectDraw."}
+        </p>
+        <div className="rcPuzzle" data-solved={solved}>
+          {order.map((piece, i) => {
+            const x = (piece % 3) * 100;
+            const y = Math.floor(piece / 3) * 100;
+            return (
+              <div
+                key={i}
+                className="rcPiece"
+                data-picked={picked == i}
+                onClick={() => pick(i)}
+              >
+                <PuzzlePicture viewBox={`${x} ${y} 100 100`} />
+              </div>
+            );
+          })}
+        </div>
+        <p className="rcHint">
+          {solved
+            ? "\u00a0"
+            : "Щёлкните два фрагмента, чтобы поменять их местами."}
+        </p>
+      </div>
+      <div className="rcFoot">
+        <Btn def disabled={!solved} onClick={onDone}>
+          Далее &gt;
+        </Btn>
+      </div>
+    </Win>
+  );
+};
+
+// «Средство проверки памяти Windows»: текстовый синий экран,
+// найти совпадающие блоки памяти
+const MemTest = ({ onDone }) => {
+  const blocks = useMemo(
+    () =>
+      shuffle([...MEMORY_BLOCKS, ...MEMORY_BLOCKS]).map((icon, i) => ({
+        icon,
+        addr:
+          "0x" +
+          (0x1a000 + i * 0x1f40 + Math.floor(Math.random() * 0x40) * 0x10)
+            .toString(16)
+            .toUpperCase()
+            .padStart(8, "0"),
+      })),
+    [],
+  );
+  const [open, setOpen] = useState([]);
+  const [found, setFound] = useState([]);
+
+  const flip = (i) => {
+    if (open.length == 2 || open.includes(i) || found.includes(blocks[i].icon))
+      return;
+    const now = [...open, i];
+    setOpen(now);
+    if (now.length < 2) return;
+    const [a, b] = now.map((k) => blocks[k]);
+    setTimeout(
+      () => {
+        if (a.icon == b.icon) setFound((f) => [...f, a.icon]);
+        setOpen([]);
+      },
+      a.icon == b.icon ? 400 : 900,
+    );
+  };
+
+  const done = found.length == MEMORY_BLOCKS.length;
+  const percent = Math.round((found.length / MEMORY_BLOCKS.length) * 100);
+
+  useEffect(() => {
+    if (!done) return;
+    const timer = setTimeout(onDone, 2500);
+    return () => clearTimeout(timer);
+  }, [done]);
+
+  return (
+    <div className="rcMem">
+      <div className="rcMemTop">Средство проверки памяти Windows</div>
+      <div className="rcMemBody">
+        <p>
+          Выполняется проверка памяти. Найдите совпадающие блоки, чтобы
+          проверить их целостность.
+        </p>
+        <p>
+          Выполняется проход 1 из 1. Общее состояние: {percent}%
+          <br />
+          Состояние:{" "}
+          {done
+            ? "неполадки оборудования не обнаружены."
+            : "неполадки пока не обнаружены."}
+        </p>
+        <div className="rcMemGrid">
+          {blocks.map((b, i) => {
+            const isOpen = open.includes(i) || found.includes(b.icon);
+            return (
+              <div
+                key={i}
+                className="rcMemBlock"
+                data-open={isOpen}
+                data-found={found.includes(b.icon)}
+                onClick={() => flip(i)}
+              >
+                {isOpen ? <span className="rcEmoji">{b.icon}</span> : b.addr}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="rcMemBottom">
+        <span>ESC=Выход</span>
+        <span>F1=Параметры</span>
       </div>
     </div>
   );
 };
 
-// Сценарий: в безопасном режиме через несколько секунд на рабочем столе
-// появляется ошибка, из неё запускается мастер восстановления, после
-// перезагрузки система работает в обычном режиме
+// Блокнот с восстановленным файлом: текст печатается, клик дописывает
+const Notepad = ({ onClose }) => {
+  const [shown, setShown] = useState(0);
+  const textRef = useRef();
+  const done = shown >= NOTEPAD_TEXT.length;
+
+  useEffect(() => {
+    if (done) return;
+    const ch = NOTEPAD_TEXT[shown];
+    let wait = 22;
+    if (ch == "\n") wait = 260;
+    else if (/[.,—!?]/.test(ch)) wait = 140;
+    const timer = setTimeout(() => setShown(shown + 1), wait);
+    return () => clearTimeout(timer);
+  }, [shown]);
+
+  useEffect(() => {
+    const el = textRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [shown]);
+
+  const text = NOTEPAD_TEXT.slice(0, shown);
+  const lines = text.split("\n");
+
+  return (
+    <Win
+      title={NOTEPAD_FILE + " — Блокнот"}
+      icon={<NotepadIcon />}
+      width={760}
+      onClose={onClose}
+      className="rcNotepad"
+    >
+      <div className="rcNpMenu">
+        <span>Файл</span>
+        <span>Правка</span>
+        <span>Просмотр</span>
+      </div>
+      <div
+        className="rcNpText"
+        ref={textRef}
+        onClick={() => setShown(NOTEPAD_TEXT.length)}
+      >
+        {text}
+        <span className="rcCaret" />
+      </div>
+      <div className="rcNpStatus">
+        <span>
+          Стр {lines.length}, стлб {lines[lines.length - 1].length + 1}
+        </span>
+        <span>100%</span>
+        <span>Windows (CRLF)</span>
+        <span>UTF-8</span>
+      </div>
+    </Win>
+  );
+};
+
+const fileSteps = (files) =>
+  files.map((f) => ({
+    text: `Восстановление файлов: C:\\Users\\${USER}\\Память\\${f}`,
+    ms: randomDelay(700, 1400),
+  }));
+
+const HALF = Math.ceil(RESTORED_FILES.length / 2);
+
+// Шаги восстановления между проверками
+const STAGES = {
+  init: {
+    from: 0,
+    to: 15,
+    steps: [
+      { text: "Восстановление системы инициализируется…", ms: 4000 },
+      { text: "Проверка владельца профиля…", ms: 1800 },
+    ],
+    next: "identity",
+  },
+  files1: {
+    from: 15,
+    to: 45,
+    steps: [
+      ...fileSteps(RESTORED_FILES.slice(0, HALF)),
+      { text: "Проверка видеоподсистемы…", ms: 1800 },
+    ],
+    next: "dxdiag",
+  },
+  files2: {
+    from: 45,
+    to: 75,
+    steps: [
+      ...fileSteps(RESTORED_FILES.slice(HALF)),
+      { text: "Проверка памяти…", ms: 1800 },
+    ],
+    next: "memtest",
+  },
+  finish: {
+    from: 75,
+    to: 100,
+    steps: [
+      { text: "Восстановление реестра…", ms: 3000 },
+      { text: "Удаление временных файлов…", ms: 2200 },
+      { text: "Завершение…", ms: 1500 },
+    ],
+    next: "success",
+  },
+};
+
+// Сценарий: в безопасном режиме на рабочем столе появляется ошибка,
+// из неё запускается «Восстановление системы»; в конце приложение
+// становится прозрачным и закрывается
 export const Recovery = () => {
   const wall = useSelector((state) => state.wallpaper);
   const dispatch = useDispatch();
-  // "idle" | "error" | "wizard"
   const [phase, setPhase] = useState("idle");
-  const [toast, setToast] = useState(false);
 
   useEffect(() => {
     if (wall.locked || wall.recovered || phase != "idle") return;
@@ -785,36 +893,79 @@ export const Recovery = () => {
     return () => clearTimeout(timer);
   }, [wall.locked, wall.recovered, phase]);
 
-  useEffect(() => {
-    if (!wall.recovered || wall.locked) return;
-    const t1 = setTimeout(() => setToast(true), 3500);
-    const t2 = setTimeout(() => setToast(false), 15000);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [wall.recovered, wall.locked]);
+  const closeApp = () => {
+    setPhase("closing");
+    const app = document.querySelector(".App");
+    document.body.style.background = "#000";
+    app.style.transition = "opacity 1.6s ease-in";
+    app.style.opacity = "0";
 
-  const finish = () => {
-    setPhase("idle");
-    dispatch({ type: "WALLRECOVERED" });
-    dispatch({ type: "WALLRESTART" });
+    setTimeout(() => {
+      try {
+        const tauriWin = window.__TAURI__ && window.__TAURI__.window;
+        if (tauriWin) tauriWin.appWindow.close();
+      } catch (e) {}
+      window.close();
+
+      // в обычном браузере вкладку закрыть нельзя — показываем
+      // рабочий стол уже без безопасного режима
+      setTimeout(() => {
+        dispatch({ type: "WALLRECOVERED" });
+        setPhase("done");
+        app.style.transition = "opacity 0.8s ease-out";
+        app.style.opacity = "1";
+      }, 1200);
+    }, 1800);
   };
+
+  const stage = STAGES[phase];
 
   return (
     <>
       {phase == "error" ? (
-        <CorruptionError onRepair={() => setPhase("wizard")} />
-      ) : null}
-      {phase == "wizard" ? <Wizard finish={finish} /> : null}
-      <div className="recToastWrap">
-        <WinToast
-          show={toast}
-          onClose={() => setToast(false)}
-          title={FINAL_TOAST.title}
-          text={FINAL_TOAST.text}
+        <CorruptionError
+          onRestore={() => setPhase("wizard")}
+          onClose={() => setPhase("idle")}
         />
-      </div>
+      ) : null}
+      {phase == "wizard" ? (
+        <Wizard
+          onCancel={() => setPhase("idle")}
+          onStart={() => setPhase("init")}
+        />
+      ) : null}
+      {stage ? (
+        <Progress
+          key={phase}
+          steps={stage.steps}
+          from={stage.from}
+          to={stage.to}
+          onDone={() => setPhase(stage.next)}
+        />
+      ) : null}
+      {phase == "identity" ? (
+        <Identity onDone={() => setPhase("files1")} />
+      ) : null}
+      {phase == "dxdiag" ? <DxDiag onDone={() => setPhase("files2")} /> : null}
+      {phase == "memtest" ? (
+        <MemTest onDone={() => setPhase("finish")} />
+      ) : null}
+      {phase == "success" ? (
+        <MsgBox
+          title="Восстановление системы"
+          icon="info"
+          onClose={() => setPhase("notepad")}
+          z={0}
+          buttons={[{ label: "Закрыть", onClick: () => setPhase("notepad") }]}
+        >
+          <p>Восстановление системы успешно завершено.</p>
+          <p>
+            Система была восстановлена до состояния на 03.11.2025. Ваши
+            документы не были затронуты.
+          </p>
+        </MsgBox>
+      ) : null}
+      {phase == "notepad" ? <Notepad onClose={closeApp} /> : null}
     </>
   );
 };
