@@ -13,6 +13,8 @@ const SAFE_MODE_BUILD =
 export const Background = () => {
   const recovered = useSelector((state) => state.wallpaper.recovered);
 
+  // после восстановления чёрный безопасный режим тает и сквозь него
+  // проступают обычные обои
   if (recovered) {
     return (
       <div
@@ -20,7 +22,12 @@ export const Background = () => {
         style={{
           backgroundImage: "url(img/wallpaper/default/img0.jpg)",
         }}
-      ></div>
+      >
+        <div className="safeFade">
+          <div className="safeMode safeBR">Безопасный режим</div>
+          <div className="safeMode safeBuild">{SAFE_MODE_BUILD}</div>
+        </div>
+      </div>
     );
   }
 

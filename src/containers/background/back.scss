@@ -470,6 +470,21 @@
   }
 }
 
+// Исчезающий безопасный режим поверх обычных обоев
+.safeFade {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  pointer-events: none;
+  animation: safeFadeOut 2.2s ease-in forwards;
+}
+
+@keyframes safeFadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
 // Безопасный режим: надпись в правом нижнем углу и сборка сверху по центру
 .background {
   position: relative;

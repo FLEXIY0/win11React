@@ -4,7 +4,8 @@ import {
   AFFECTED,
   ERROR_PATH,
   IDENTITY,
-  MEMORY_BLOCKS,
+  MEMORY_PAIRS,
+  AFFIRMATIONS,
   NOTEPAD_FILE,
   NOTEPAD_TEXT,
   PRODUCT,
@@ -36,6 +37,7 @@ const ICONS = {
   monitor: "img/icon/fluent/laptop_48_color.svg",
   key: "img/icon/fluent/lock_shield_48_color.svg",
   info: "img/icon/win/info.png",
+  keyboard: "img/icon/win/1479.png",
   notepad: "img/icon/notepad.png",
 };
 
@@ -607,7 +609,8 @@ const DxDiag = ({ onDone }) => {
 };
 
 // «Средство проверки памяти Windows»: настоящий текстовый режим 80×25,
-// только знакоместа и цвета VGA. Нужно найти блоки с одинаковыми данными
+// только знакоместа и цвета VGA. Нужно найти пары связанных блоков;
+// каждая пара восстанавливает строчку воспоминания внизу экрана
 const COLS = 4;
 const CELL = 16;
 const center = (str, width) => {
@@ -618,8 +621,13 @@ const center = (str, width) => {
 const MemTest = ({ onDone }) => {
   const blocks = useMemo(
     () =>
-      shuffle([...MEMORY_BLOCKS, ...MEMORY_BLOCKS]).map((word, i) => ({
-        word,
+      shuffle(
+        MEMORY_PAIRS.flatMap((p, k) => [
+          { pair: k, word: p.a },
+          { pair: k, word: p.b },
+        ]),
+      ).map((b, i) => ({
+        ...b,
         addr:
           "0x" +
           (0x1a000 + i * 0x1f40 + Math.floor(Math.random() * 0x40) * 0x10)
@@ -632,23 +640,23 @@ const MemTest = ({ onDone }) => {
   const [cursor, setCursor] = useState(0);
   const [open, setOpen] = useState([]);
   const [found, setFound] = useState([]);
-  const done = found.length == MEMORY_BLOCKS.length;
-  const percent = Math.round((found.length / MEMORY_BLOCKS.length) * 100);
+  const done = found.length == MEMORY_PAIRS.length;
+  const percent = Math.round((found.length / MEMORY_PAIRS.length) * 100);
 
   const check = (i) => {
     if (done || open.length == 2 || open.includes(i)) return;
-    if (found.includes(blocks[i].word)) return;
+    if (found.includes(blocks[i].pair)) return;
     const now = [...open, i];
     setOpen(now);
     if (now.length < 2) return;
     const [a, b] = now.map((k) => blocks[k]);
-    const same = a.word == b.word;
+    const same = a.pair == b.pair;
     setTimeout(
       () => {
-        if (same) setFound((f) => [...f, a.word]);
+        if (same) setFound((f) => [...f, a.pair]);
         setOpen([]);
       },
-      same ? 500 : 1100,
+      same ? 500 : 1200,
     );
   };
 
@@ -679,14 +687,13 @@ const MemTest = ({ onDone }) => {
 
   useEffect(() => {
     if (!done) return;
-    const timer = setTimeout(onDone, 3000);
+    const timer = setTimeout(onDone, 6000);
     return () => clearTimeout(timer);
   }, [done]);
 
   const cell = (b, i) => {
-    const isFound = found.includes(b.word);
+    const isFound = found.includes(b.pair);
     const isOpen = isFound || open.includes(i);
-    const text = center(isOpen ? b.word : b.addr, CELL - 4);
     return (
       <React.Fragment key={i}>
         <span
@@ -698,7 +705,7 @@ const MemTest = ({ onDone }) => {
             check(i);
           }}
         >
-          {" " + text + " "}
+          {center(isOpen ? b.word : b.addr, CELL)}
         </span>
         {"  "}
       </React.Fragment>
@@ -708,15 +715,31 @@ const MemTest = ({ onDone }) => {
   const rows = [];
   for (let r = 0; r < blocks.length / COLS; r++) {
     rows.push(
-      <div key={"r" + r}>
-        {"   "}
+      <div key={r}>
+        {" "}
         {blocks
           .slice(r * COLS, r * COLS + COLS)
           .map((b, k) => cell(b, r * COLS + k))}
       </div>,
-      <div key={"g" + r}> </div>,
     );
   }
+
+  const log = MEMORY_PAIRS.map((_, k) => {
+    const p = MEMORY_PAIRS[found[k]];
+    if (!p) return <div key={k}> </div>;
+    return (
+      <div key={k}>
+        {"   "}
+        <span className="rcTm" data-color="green">
+          [OK]
+        </span>{" "}
+        <span className="rcTm" data-color="white">
+          {p.a + " + " + p.b}
+        </span>
+        {" — " + p.line}
+      </div>
+    );
+  });
 
   return (
     <div className="rcMem">
@@ -729,7 +752,9 @@ const MemTest = ({ onDone }) => {
           {"   Windows проверяет память. Это может занять несколько минут."}
         </div>
         <div>
-          {"   Найдите блоки с одинаковыми данными, чтобы проверить их."}
+          {
+            "   Найдите связанные блоки данных, чтобы восстановить воспоминания."
+          }
         </div>
         <div> </div>
         <div>
@@ -739,13 +764,16 @@ const MemTest = ({ onDone }) => {
           {"   Состояние: "}
           <span data-color={done ? "white" : ""} className="rcTm">
             {done
-              ? "неполадки оборудования не обнаружены."
+              ? "все воспоминания восстановлены. Повреждений не обнаружено."
               : "неполадки пока не обнаружены."}
           </span>
         </div>
         <div> </div>
-        <div> </div>
         {rows}
+        <div> </div>
+        <div>{"   Восстановленные воспоминания:"}</div>
+        {log}
+        <div> </div>
         <div>
           {done
             ? "   Проверка завершена. Компьютер продолжит восстановление."
@@ -757,6 +785,105 @@ const MemTest = ({ onDone }) => {
         <span>F1=Параметры</span>
       </div>
     </div>
+  );
+};
+
+// «Калибровка клавиатуры»: ввести контрольные фразы точно как показано
+const normPhrase = (t) =>
+  t
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[^a-zа-я0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const Keyboard = ({ onDone }) => {
+  const [idx, setIdx] = useState(0);
+  const [text, setText] = useState("");
+  // "" | "ok" | "wrong"
+  const [result, setResult] = useState("");
+  const inputRef = useRef();
+  const finished = idx >= AFFIRMATIONS.length;
+  const phrase = AFFIRMATIONS[Math.min(idx, AFFIRMATIONS.length - 1)];
+
+  const submit = () => {
+    if (result == "ok") return;
+    if (normPhrase(text) != normPhrase(phrase)) return setResult("wrong");
+    setResult("ok");
+    setTimeout(() => {
+      setResult("");
+      setText("");
+      setIdx((i) => i + 1);
+      if (inputRef.current) inputRef.current.focus();
+    }, 1400);
+  };
+
+  return (
+    <Win
+      title="Калибровка клавиатуры"
+      icon={<MsgIcon type="keyboard" size={16} />}
+      width={500}
+      onClose={() => {}}
+    >
+      <div className="rcPad rcDlg">
+        <div className="rcMsg rcMsgFlat">
+          <MsgIcon type="keyboard" />
+          <div className="rcMsgText">
+            {finished ? (
+              <p>Калибровка завершена. Устройства ввода работают правильно.</p>
+            ) : (
+              <p>
+                Чтобы проверить клавиатуру, введите контрольную фразу точно так,
+                как она показана ниже. Фраза {idx + 1} из {AFFIRMATIONS.length}.
+              </p>
+            )}
+          </div>
+        </div>
+        {finished ? (
+          <div className="rcPhraseDone">
+            {AFFIRMATIONS.map((a) => (
+              <div key={a}>✓ {a}</div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="rcPhrase">{phrase}</div>
+            <input
+              ref={inputRef}
+              className="rcField rcFieldText"
+              value={text}
+              autoFocus
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="Введите фразу"
+              onChange={(e) => {
+                setText(e.target.value);
+                if (result == "wrong") setResult("");
+              }}
+              onKeyDown={(e) => e.key == "Enter" && submit()}
+            />
+            <p className="rcKbdResult" data-result={result}>
+              {result == "ok"
+                ? "✓ Ввод распознан."
+                : result == "wrong"
+                ? "Введённый текст не совпадает с контрольной фразой. Повторите ввод."
+                : "\u00a0"}
+            </p>
+          </>
+        )}
+      </div>
+      <div className="rcFoot rcFootWide">
+        {finished ? (
+          <Btn def onClick={onDone}>
+            Готово
+          </Btn>
+        ) : (
+          <Btn def disabled={!text.trim() || result == "ok"} onClick={submit}>
+            Далее
+          </Btn>
+        )}
+      </div>
+    </Win>
   );
 };
 
@@ -863,7 +990,14 @@ const ProductKey = ({ onDone }) => {
       <>
         <div className="rcDlgTitle">Активация Windows</div>
         <p>Мы активировали эту копию Windows.</p>
-        <p>Выпуск: {PRODUCT.edition}</p>
+        <div className="rcProps">
+          {PRODUCT.details.map(([k, v]) => (
+            <React.Fragment key={k}>
+              <span>{k}:</span>
+              <span>{v}</span>
+            </React.Fragment>
+          ))}
+        </div>
       </>
     );
     buttons = (
@@ -902,7 +1036,7 @@ const ProductKey = ({ onDone }) => {
 };
 
 // Блокнот с восстановленным файлом: текст печатается, клик дописывает
-const Notepad = ({ onClose }) => {
+const Notepad = ({ onClose, closing }) => {
   const [shown, setShown] = useState(0);
   const textRef = useRef();
   const done = shown >= NOTEPAD_TEXT.length;
@@ -931,7 +1065,7 @@ const Notepad = ({ onClose }) => {
       icon={<NotepadIcon />}
       width={760}
       onClose={onClose}
-      className="rcNotepad"
+      className={"rcNotepad" + (closing ? " rcFadeOut" : "")}
     >
       <div className="rcNpMenu">
         <span>Файл</span>
@@ -995,8 +1129,14 @@ const STAGES = {
     ],
     next: "memtest",
   },
-  finish1: {
+  inputs: {
     from: 75,
+    to: 80,
+    steps: [{ text: "Проверка устройств ввода…", ms: 2000 }],
+    next: "keyboard",
+  },
+  finish1: {
+    from: 80,
     to: 90,
     steps: [
       { text: "Восстановление реестра…", ms: 3000 },
@@ -1029,29 +1169,20 @@ export const Recovery = () => {
     return () => clearTimeout(timer);
   }, [wall.locked, wall.recovered, phase]);
 
+  // Блокнот и чёрный безопасный режим становятся прозрачными, сквозь
+  // них проступает обычный рабочий стол; потом окно приложения
+  // пробует закрыться (в отдельном окне или приложении Tauri)
   const closeApp = () => {
     setPhase("closing");
-    const app = document.querySelector(".App");
-    document.body.style.background = "#000";
-    app.style.transition = "opacity 1.6s ease-in";
-    app.style.opacity = "0";
-
+    dispatch({ type: "WALLRECOVERED" });
     setTimeout(() => {
+      setPhase("done");
       try {
         const tauriWin = window.__TAURI__ && window.__TAURI__.window;
         if (tauriWin) tauriWin.appWindow.close();
       } catch (e) {}
       window.close();
-
-      // в обычном браузере вкладку закрыть нельзя — показываем
-      // рабочий стол уже без безопасного режима
-      setTimeout(() => {
-        dispatch({ type: "WALLRECOVERED" });
-        setPhase("done");
-        app.style.transition = "opacity 0.8s ease-out";
-        app.style.opacity = "1";
-      }, 1200);
-    }, 1800);
+    }, 2600);
   };
 
   const stage = STAGES[phase];
@@ -1084,7 +1215,10 @@ export const Recovery = () => {
       ) : null}
       {phase == "dxdiag" ? <DxDiag onDone={() => setPhase("files2")} /> : null}
       {phase == "memtest" ? (
-        <MemTest onDone={() => setPhase("finish1")} />
+        <MemTest onDone={() => setPhase("inputs")} />
+      ) : null}
+      {phase == "keyboard" ? (
+        <Keyboard onDone={() => setPhase("finish1")} />
       ) : null}
       {phase == "license" ? (
         <ProductKey onDone={() => setPhase("finish2")} />
@@ -1104,7 +1238,9 @@ export const Recovery = () => {
           </p>
         </MsgBox>
       ) : null}
-      {phase == "notepad" ? <Notepad onClose={closeApp} /> : null}
+      {phase == "notepad" || phase == "closing" ? (
+        <Notepad onClose={closeApp} closing={phase == "closing"} />
+      ) : null}
     </>
   );
 };
