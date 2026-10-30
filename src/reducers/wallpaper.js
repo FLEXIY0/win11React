@@ -31,6 +31,8 @@ const defState = {
   booted: false || import.meta.env.MODE == "development",
   act: "",
   dir: 0,
+  // после мастера восстановления система выходит из безопасного режима
+  recovered: false,
 };
 
 const wallReducer = (state = defState, action) => {
@@ -69,6 +71,11 @@ const wallReducer = (state = defState, action) => {
         dir: -1,
         locked: true,
         act: "restart",
+      };
+    case "WALLRECOVERED":
+      return {
+        ...state,
+        recovered: true,
       };
     case "WALLSHUTDN":
       return {

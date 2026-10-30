@@ -21,6 +21,7 @@ import {
   BootScreen,
   LockScreen,
 } from "./containers/background";
+import { Recovery } from "./containers/recovery";
 
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
@@ -159,6 +160,7 @@ function App() {
           </div>
           {taskbarReady ? <Taskbar /> : null}
           <ActMenu />
+          <Recovery />
         </div>
       </ErrorBoundary>
     </div>

@@ -11,6 +11,19 @@ const SAFE_MODE_BUILD =
   "Microsoft (R) Windows (R) (Build 26100.ge_release.240331-1435)";
 
 export const Background = () => {
+  const recovered = useSelector((state) => state.wallpaper.recovered);
+
+  if (recovered) {
+    return (
+      <div
+        className="background"
+        style={{
+          backgroundImage: "url(img/wallpaper/default/img0.jpg)",
+        }}
+      ></div>
+    );
+  }
+
   return (
     <div
       className="background"
@@ -258,7 +271,7 @@ const WindowsLogo = ({ size }) => (
 
 // Уведомление Windows 11: сверху область атрибуции (значок и имя
 // приложения, «…» и «✕»), ниже значок 48×48 слева, заголовок и текст
-const LockToast = ({ show, onClose }) => (
+export const WinToast = ({ show, onClose, title, text }) => (
   <div
     className="winToast"
     data-show={show}
@@ -282,8 +295,8 @@ const LockToast = ({ show, onClose }) => (
         </svg>
       </div>
       <div className="winToastTexts">
-        <div className="winToastTitle">Ты большая молодец!</div>
-        <div className="winToastText">Но я хочу тебе кое-что показать)</div>
+        <div className="winToastTitle">{title}</div>
+        <div className="winToastText">{text}</div>
       </div>
     </div>
   </div>
@@ -307,6 +320,7 @@ export const LockScreen = (props) => {
 
   const userName = useSelector((state) => state.setting.person.name);
   const booted = useSelector((state) => state.wallpaper.booted);
+  const recovered = useSelector((state) => state.wallpaper.recovered);
   const [time, setTime] = useState(new Date());
   // после загрузки экран блокировки «просыпается» не сразу: долгая
   // чернота, часы, короткое мигание, потом значки внизу
@@ -334,6 +348,17 @@ export const LockScreen = (props) => {
     at(clockAt + randomDelay(1000, 2000), () => setIconsOn(true));
     return () => timers.forEach(clearTimeout);
   }, [booted]);
+
+  // после восстановления пароль не нужен: вход выполняется сам
+  useEffect(() => {
+    if (!recovered || !iconsOn) return;
+    const t1 = setTimeout(() => setLock(true), 1500);
+    const t2 = setTimeout(() => signIn(), 2300);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [recovered, iconsOn]);
 
   // поле пароля подгружается чуть позже аватара и имени
   useEffect(() => {
@@ -615,7 +640,12 @@ export const LockScreen = (props) => {
         <Icon className="mx-2" src="wifi" ui width={16} invert />
         <Battery invert />
       </div>
-      <LockToast show={toast} onClose={() => setToast(false)} />
+      <WinToast
+        show={toast}
+        onClose={() => setToast(false)}
+        title="Ты большая молодец!"
+        text="Но я хочу тебе кое-что показать)"
+      />
     </div>
   );
 };
