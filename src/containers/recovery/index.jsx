@@ -7,6 +7,7 @@ import {
   MEMORY_BLOCKS,
   NOTEPAD_FILE,
   NOTEPAD_TEXT,
+  PRODUCT,
   RESTORED_FILES,
   RESTORE_POINTS,
   USER,
@@ -25,116 +26,33 @@ const shuffle = (arr) => {
   return a;
 };
 
-// Значки классических окон сообщений Windows
-const MsgIcon = ({ type, size = 32 }) => {
-  if (type == "error") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 32 32">
-        <circle cx="16" cy="16" r="15" fill="#c42b1c" />
-        <path
-          d="M11 11l10 10M21 11L11 21"
-          stroke="#fff"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-  if (type == "question") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 32 32">
-        <circle cx="16" cy="16" r="15" fill="#0067c0" />
-        <text
-          x="16"
-          y="22.5"
-          fontSize="19"
-          fontWeight="600"
-          fill="#fff"
-          textAnchor="middle"
-          fontFamily="Segoe UI, sans-serif"
-        >
-          ?
-        </text>
-      </svg>
-    );
-  }
-  if (type == "shield") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 32 32">
-        <path
-          d="M16 2l12 4.5v8.5c0 7.5-5.2 13-12 15C9.2 28 4 22.5 4 15V6.5z"
-          fill="#0067c0"
-        />
-        <path
-          d="M16 2v28C9.2 28 4 22.5 4 15V6.5z"
-          fill="#2b88d8"
-          opacity="0.9"
-        />
-        <path
-          d="M11 16l3.5 3.5 7-7"
-          stroke="#fff"
-          strokeWidth="2.4"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
-  // info
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32">
-      <circle cx="16" cy="16" r="15" fill="#0067c0" />
-      <rect x="14.6" y="13.5" width="2.8" height="10" rx="1.2" fill="#fff" />
-      <circle cx="16" cy="9.6" r="1.8" fill="#fff" />
-    </svg>
-  );
+// Значки: цветные Fluent-значки Microsoft (img/icon/fluent, MIT)
+// и значки Windows 11 из img/icon
+const ICONS = {
+  error: "img/icon/fluent/dismiss_circle_48_color.svg",
+  question: "img/icon/fluent/question_circle_48_color.svg",
+  shield: "img/icon/fluent/shield_checkmark_48_color.svg",
+  restore: "img/icon/fluent/history_48_color.svg",
+  monitor: "img/icon/fluent/laptop_48_color.svg",
+  key: "img/icon/fluent/lock_shield_48_color.svg",
+  info: "img/icon/win/info.png",
+  notepad: "img/icon/notepad.png",
 };
 
-// Значок «Восстановления системы»: часы со стрелкой назад
-const RestoreIcon = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 32 32">
-    <circle
-      cx="17"
-      cy="17"
-      r="12"
-      fill="#fff"
-      stroke="#3a7bd5"
-      strokeWidth="2"
-    />
-    <path
-      d="M17 10v7l5 3"
-      stroke="#2b2b2b"
-      strokeWidth="2"
-      fill="none"
-      strokeLinecap="round"
-    />
-    <path
-      d="M5.5 8.5A13.5 13.5 0 0 1 17 3.5"
-      stroke="#2e9e3e"
-      strokeWidth="2.6"
-      fill="none"
-      strokeLinecap="round"
-    />
-    <path d="M2.5 5l7.5 1-4.5 6z" fill="#2e9e3e" />
-  </svg>
+const MsgIcon = ({ type, size = 32 }) => (
+  <img
+    src={ICONS[type]}
+    width={size}
+    height={size}
+    alt=""
+    draggable={false}
+    style={{ objectFit: "contain", flexShrink: 0 }}
+  />
 );
 
-const NotepadIcon = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 16 16">
-    <rect
-      x="2.5"
-      y="1.5"
-      width="11"
-      height="13"
-      rx="1.5"
-      fill="#fff"
-      stroke="#5d9ad6"
-    />
-    <rect x="2.5" y="1.5" width="11" height="3" rx="1.5" fill="#5d9ad6" />
-    <path d="M5 7.5h6M5 9.5h6M5 11.5h4" stroke="#7a8794" strokeWidth="0.9" />
-  </svg>
-);
+const RestoreIcon = ({ size = 16 }) => <MsgIcon type="restore" size={size} />;
+
+const NotepadIcon = ({ size = 16 }) => <MsgIcon type="notepad" size={size} />;
 
 // Окно Windows 11 со светлой рамкой; перетаскивается за заголовок
 const Win = ({
@@ -647,7 +565,7 @@ const DxDiag = ({ onDone }) => {
   return (
     <Win
       title="Средство диагностики DirectX"
-      icon={<MsgIcon type="info" size={16} />}
+      icon={<MsgIcon type="monitor" size={16} />}
       width={440}
       onClose={() => {}}
     >
@@ -842,6 +760,147 @@ const MemTest = ({ onDone }) => {
   );
 };
 
+// Окно Windows 11 «Введите ключ продукта» и активация
+const normKey = (k) => k.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+const formatKey = (raw) =>
+  normKey(raw)
+    .slice(0, 25)
+    .replace(/(.{5})(?=.)/g, "$1-");
+
+const ProductKey = ({ onDone }) => {
+  const [key, setKey] = useState("");
+  // "enter" | "checking" | "activate" | "activating" | "done"
+  const [step, setStep] = useState("enter");
+  const [wrong, setWrong] = useState(false);
+  const [cancel, setCancel] = useState(false);
+  const full = normKey(key).length == 25;
+
+  const check = () => {
+    setStep("checking");
+    setWrong(false);
+    setTimeout(() => {
+      if (normKey(key) == normKey(PRODUCT.key)) setStep("activate");
+      else {
+        setWrong(true);
+        setStep("enter");
+      }
+    }, randomDelay(1500, 2800));
+  };
+
+  const activate = () => {
+    setStep("activating");
+    setTimeout(() => setStep("done"), randomDelay(3000, 4500));
+  };
+
+  let body;
+  let buttons;
+  if (step == "enter" || step == "checking") {
+    body = (
+      <>
+        <div className="rcDlgTitle">Введите ключ продукта</div>
+        <p>
+          Для завершения восстановления профиля {USER} требуется ключ продукта.{" "}
+          {PRODUCT.hint}
+        </p>
+        <p className="rcMuted">
+          Ключ продукта выглядит примерно так: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
+        </p>
+        <label className="rcFieldLabel" htmlFor="rcKey">
+          Ключ продукта
+        </label>
+        <input
+          id="rcKey"
+          className="rcField"
+          value={key}
+          autoFocus
+          autoComplete="off"
+          spellCheck={false}
+          disabled={step == "checking"}
+          onChange={(e) => setKey(formatKey(e.target.value))}
+          onKeyDown={(e) => e.key == "Enter" && full && check()}
+        />
+        <p className="rcError" data-show={wrong}>
+          Этот ключ продукта не работает. Проверьте его и повторите попытку или
+          введите другой ключ. (0xC004F050)
+        </p>
+      </>
+    );
+    buttons = (
+      <>
+        <Btn def disabled={!full || step == "checking"} onClick={check}>
+          {step == "checking" ? "Проверка…" : "Далее"}
+        </Btn>
+        <Btn disabled={step == "checking"} onClick={() => setCancel(true)}>
+          Отмена
+        </Btn>
+      </>
+    );
+  } else if (step == "activate" || step == "activating") {
+    body = (
+      <>
+        <div className="rcDlgTitle">Активировать Windows</div>
+        <p>Выпуск: {PRODUCT.edition}</p>
+        <p>
+          {step == "activating"
+            ? "Активация Windows…"
+            : "Ключ продукта подходит. Активируйте эту копию Windows, чтобы завершить восстановление."}
+        </p>
+        {step == "activating" ? (
+          <div className="rcBar rcBarMarquee">
+            <div />
+          </div>
+        ) : null}
+      </>
+    );
+    buttons = (
+      <Btn def disabled={step == "activating"} onClick={activate}>
+        Активировать
+      </Btn>
+    );
+  } else {
+    body = (
+      <>
+        <div className="rcDlgTitle">Активация Windows</div>
+        <p>Мы активировали эту копию Windows.</p>
+        <p>Выпуск: {PRODUCT.edition}</p>
+      </>
+    );
+    buttons = (
+      <Btn def onClick={onDone}>
+        Закрыть
+      </Btn>
+    );
+  }
+
+  return (
+    <>
+      <Win
+        title="Активация Windows"
+        icon={<MsgIcon type="key" size={16} />}
+        width={480}
+        onClose={() => step == "enter" && setCancel(true)}
+      >
+        <div className="rcPad rcDlg">{body}</div>
+        <div className="rcFoot rcFootWide">{buttons}</div>
+      </Win>
+      {cancel ? (
+        <MsgBox
+          title="Активация Windows"
+          icon="error"
+          onClose={() => setCancel(false)}
+          buttons={[{ label: "ОК", onClick: () => setCancel(false) }]}
+        >
+          <p>
+            Без ключа продукта восстановление профиля {USER} не может быть
+            завершено.
+          </p>
+        </MsgBox>
+      ) : null}
+    </>
+  );
+};
+
 // Блокнот с восстановленным файлом: текст печатается, клик дописывает
 const Notepad = ({ onClose }) => {
   const [shown, setShown] = useState(0);
@@ -901,7 +960,7 @@ const Notepad = ({ onClose }) => {
 
 const fileSteps = (files) =>
   files.map((f) => ({
-    text: `Восстановление файлов: C:\\Users\\${USER}\\Память\\${f}`,
+    text: `Восстановление файлов: C:\\Users\\${USER}\\Documents\\${f}`,
     ms: randomDelay(700, 1400),
   }));
 
@@ -936,11 +995,19 @@ const STAGES = {
     ],
     next: "memtest",
   },
-  finish: {
+  finish1: {
     from: 75,
-    to: 100,
+    to: 90,
     steps: [
       { text: "Восстановление реестра…", ms: 3000 },
+      { text: "Проверка лицензии…", ms: 2200 },
+    ],
+    next: "license",
+  },
+  finish2: {
+    from: 90,
+    to: 100,
+    steps: [
       { text: "Удаление временных файлов…", ms: 2200 },
       { text: "Завершение…", ms: 1500 },
     ],
@@ -1017,7 +1084,10 @@ export const Recovery = () => {
       ) : null}
       {phase == "dxdiag" ? <DxDiag onDone={() => setPhase("files2")} /> : null}
       {phase == "memtest" ? (
-        <MemTest onDone={() => setPhase("finish")} />
+        <MemTest onDone={() => setPhase("finish1")} />
+      ) : null}
+      {phase == "license" ? (
+        <ProductKey onDone={() => setPhase("finish2")} />
       ) : null}
       {phase == "success" ? (
         <MsgBox

@@ -3,7 +3,7 @@
 export const USER = "pletnevava";
 
 // Окно ошибки на рабочем столе
-export const ERROR_PATH = "C:\\Users\\pletnevava\\Память";
+export const ERROR_PATH = "C:\\Users\\pletnevava\\Documents";
 
 // Точки восстановления. Подходит только та, у которой ok: true,
 // остальные «повреждены»
@@ -88,6 +88,14 @@ export const MEMORY_BLOCKS = [
   "СТАРТАП",
   "ПТИЧКА",
 ];
+
+// Окно «Введите ключ продукта» в конце восстановления. Ключ печатается
+// на наклейку к подарку; регистр, пробелы и дефисы при вводе не важны
+export const PRODUCT = {
+  edition: "Windows 11 Домашняя Уютная",
+  key: "DTPPF-7CXHR-9T8B6-GX342-QHCJ7",
+  hint: "Ключ продукта указан на наклейке, прикреплённой к комплекту восстановления.",
+};
 
 // Файлы, которые «восстанавливаются» в окне прогресса
 export const RESTORED_FILES = [

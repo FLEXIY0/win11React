@@ -10,6 +10,7 @@
   font-size: 12px;
   line-height: 1.45;
   color: #000;
+  color-scheme: light;
   cursor: default;
   user-select: none;
 
@@ -133,6 +134,64 @@
     background: #f5f5f5;
     border: 1px solid #e0e0e0;
   }
+}
+
+// Диалог Windows 11 (ContentDialog): крупный заголовок, поле ввода,
+// две равные кнопки внизу
+.rcDlg {
+  padding: 20px 24px 8px;
+}
+
+.rcDlgTitle {
+  margin-bottom: 12px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.rcMuted {
+  color: #5d5d5d;
+}
+
+.rcFieldLabel {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.rcField {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #000;
+  background: #fff;
+  border: 1px solid #d1d1d1;
+  border-bottom: 1px solid #868686;
+  border-radius: 4px;
+  outline: none;
+
+  &:focus {
+    border-bottom: 2px solid #0067c0;
+  }
+
+  &:disabled {
+    color: #6d6d6d;
+    background: #f9f9f9;
+  }
+}
+
+.rcFootWide .rcBtn {
+  flex: 1;
+  height: 32px;
+}
+
+.rcFootWide .rcBtn[data-default="true"]:not(:disabled) {
+  background: #0067c0;
+  border-color: #0067c0;
+  color: #fff;
 }
 
 // Мастер восстановления
@@ -302,6 +361,12 @@
     border-bottom-color: #868686;
     border-radius: 4px;
     background: #fff;
+    color: #000;
+  }
+
+  option {
+    background: #fff;
+    color: #000;
   }
 
   @media (max-width: 520px) {
