@@ -92,6 +92,32 @@
   }
 }
 
+// Часы, дата и имя пользователя в Windows 11 набраны
+// Segoe UI Variable Display, полужирным
+.lockClock {
+  font-family: var(--font-display);
+  font-size: 3.75rem;
+  line-height: 1;
+  font-weight: 600;
+  color: #f3f4f6;
+}
+
+.lockDate {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.lockUserName {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  color: #fff;
+}
+
 .fadeinScreen {
   position: absolute;
   top: 25%;
@@ -329,33 +355,6 @@
   }
 }
 
-// https://docs.microsoft.com/en-us/fluent-ui/web-components/components/progress-ring
-
-.progressRing circle {
-  stroke: white;
-  fill: none;
-  stroke-width: 2px;
-  stroke-linecap: round;
-  transform-origin: 50% 50%;
-  transition: all 0.2s ease-in-out 0s;
-  animation: 2s linear 0s infinite normal none running spin-infinite;
-}
-
-@keyframes spin-infinite {
-  0% {
-    stroke-dasharray: 0.01px, 43.97px;
-    transform: rotate(0deg);
-  }
-  50% {
-    stroke-dasharray: 21.99px, 21.99px;
-    transform: rotate(450deg);
-  }
-  100% {
-    stroke-dasharray: 0.01px, 43.97px;
-    transform: rotate(1080deg);
-  }
-}
-
 // Уведомление Windows 11 (тёмная тема экрана блокировки): ширина 364 px,
 // значок 48×48 (learn.microsoft.com, App notification content);
 // вход — Fluent «fast out, slow in», выход — ускоряющаяся кривая
@@ -368,7 +367,7 @@
   max-width: calc(100vw - 32px);
   padding: 0 0 16px;
   color: #fff;
-  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  font-family: var(--font-text);
   background: rgba(44, 44, 44, 0.96);
   backdrop-filter: blur(30px) saturate(125%);
   border: 1px solid rgba(255, 255, 255, 0.08);

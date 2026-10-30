@@ -202,14 +202,7 @@ export const BootScreen = (props) => {
       >
         <BootLogo />
         <div className="mt-48" id="loader" data-hide={!ring}>
-          <svg
-            className="progressRing"
-            height={48}
-            width={48}
-            viewBox="0 0 16 16"
-          >
-            <circle cx="8px" cy="8px" r="7px"></circle>
-          </svg>
+          <Spinner size={40} />
         </div>
       </div>
     </div>
@@ -233,7 +226,7 @@ const SECURITY_QUESTIONS = [
   },
   {
     question: "Дата важного дня в твоей жизни?",
-    placeholder: "ддммгггг",
+    placeholder: "Ответ на контрольный вопрос 3",
     answer: "03112025",
     digits: true,
   },
@@ -553,7 +546,7 @@ export const LockScreen = (props) => {
         data-faded={lock}
         style={{ visibility: clockOn ? "visible" : "hidden" }}
       >
-        <div className="text-6xl font-semibold text-gray-100">
+        <div className="lockClock">
           {time.toLocaleTimeString("en-GB", {
             hour: "2-digit",
             minute: "2-digit",
@@ -561,7 +554,7 @@ export const LockScreen = (props) => {
             timeZone: "Europe/Moscow",
           })}
         </div>
-        <div className="text-lg font-medium text-gray-200">
+        <div className="lockDate">
           {time.toLocaleDateString("ru-RU", {
             weekday: "long",
             month: "long",
@@ -582,7 +575,7 @@ export const LockScreen = (props) => {
             <path d="M27.5 60A5 5 0 0 1 32.5 55H68.5A5 5 0 0 1 73.5 60V63.5A23 13.5 0 0 1 27.5 63.5Z" />
           </svg>
         </div>
-        <div className="mt-5 text-2xl font-medium text-gray-200">
+        <div className="mt-5 lockUserName">
           {userName}
         </div>
         {welcome ? (
