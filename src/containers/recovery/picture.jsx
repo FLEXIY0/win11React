@@ -1,33 +1,56 @@
 import React from "react";
 
-// Картинка для пазла: ночная дорога через лес, фонарик, двое,
-// НЛО (или спутник) в небе и указатель на деревню Рай.
+// Картинка для пазла: ночная дорога через лес, фонарик, двое у
+// развилки. Налево указатель на деревню Рай, до которой мы так и не
+// дошли, направо — темнота; в небе НЛО (или спутник).
 // viewBox задаёт видимую часть — так каждый фрагмент пазла рисует
 // свой кусок той же картинки
-const trees = (side) => {
-  const out = [];
-  for (let i = 0; i < 9; i++) {
-    const base = 178 + i * 15;
-    const h = 30 + i * 9;
-    const w = 14 + i * 4;
-    const x = side < 0 ? 12 + ((i * 37) % 95) : 300 - 12 - ((i * 37) % 95);
-    const shade = i < 3 ? "#123326" : i < 6 ? "#0e2a1f" : "#0a2018";
-    out.push(
-      <g key={side + "-" + i} fill={shade}>
-        <polygon
-          points={`${x},${base - h} ${x - w},${base} ${x + w},${base}`}
-        />
-        <polygon
-          points={`${x},${base - h * 0.75} ${x - w * 1.15},${base + 8} ${
-            x + w * 1.15
-          },${base + 8}`}
-        />
-        <rect x={x - 2} y={base + 6} width="4" height="8" fill="#0a1510" />
-      </g>,
-    );
-  }
-  return out;
+const Tree = ({ x, base, h, shade }) => {
+  const w = h * 0.42;
+  return (
+    <g fill={shade}>
+      <polygon points={`${x},${base - h} ${x - w},${base} ${x + w},${base}`} />
+      <polygon
+        points={`${x},${base - h * 0.75} ${x - w * 1.15},${base + h * 0.2} ${
+          x + w * 1.15
+        },${base + h * 0.2}`}
+      />
+      <rect
+        x={x - h * 0.05}
+        y={base + h * 0.15}
+        width={h * 0.1}
+        height={h * 0.15}
+        fill="#0a1510"
+      />
+    </g>
+  );
 };
+
+// [x, основание, высота]: дальние у горизонта, лес между ветками
+// развилки и ближние по краям дороги
+const FAR = [
+  [8, 176, 22],
+  [22, 178, 28],
+  [80, 180, 20],
+  [262, 177, 24],
+  [280, 179, 30],
+  [296, 176, 22],
+];
+const MIDDLE = [
+  [98, 192, 22],
+  [118, 196, 18],
+  [182, 196, 18],
+  [204, 192, 24],
+  [226, 186, 20],
+];
+const NEAR = [
+  [16, 236, 70],
+  [46, 262, 78],
+  [8, 296, 96],
+  [286, 238, 72],
+  [258, 266, 80],
+  [296, 298, 96],
+];
 
 const STARS = [
   [20, 18],
@@ -88,48 +111,57 @@ export const PuzzlePicture = ({ viewBox = "0 0 300 300", ...props }) => (
       <circle key={x} cx={x} cy="65" r="1.6" fill="#ffe27a" />
     ))}
 
-    {/* деревня на горизонте */}
     <rect x="0" y="172" width="300" height="128" fill="#08130e" />
+    {FAR.map(([x, base, h]) => (
+      <Tree key={x} x={x} base={base} h={h} shade="#123326" />
+    ))}
+
+    {/* деревня Рай вдали, в конце левой дороги */}
     <g fill="#0c1a14">
-      <rect x="132" y="162" width="10" height="10" />
-      <polygon points="131,163 137,157 143,163" />
-      <rect x="146" y="164" width="8" height="8" />
-      <polygon points="145,165 150,160 155,165" />
-      <rect x="158" y="161" width="11" height="11" />
-      <polygon points="157,162 163.5,156 170,162" />
+      <rect x="36" y="164" width="9" height="9" />
+      <polygon points="35,165 40.5,159 46,165" />
+      <rect x="48" y="166" width="8" height="7" />
+      <polygon points="47,167 52,162 57,167" />
+      <rect x="59" y="163" width="10" height="10" />
+      <polygon points="58,164 64,158 70,164" />
     </g>
     <g fill="#ffcf6b">
-      <rect x="135" y="165" width="2.5" height="2.5" />
-      <rect x="149" y="167" width="2" height="2" />
-      <rect x="161" y="164" width="2.5" height="2.5" />
-      <rect x="165" y="167" width="2" height="2" />
+      <rect x="39" y="167" width="2.5" height="2.5" />
+      <rect x="51" y="168.5" width="2" height="2" />
+      <rect x="62" y="166" width="2.5" height="2.5" />
+      <rect x="65.5" y="169" width="2" height="2" />
     </g>
 
-    {/* дорога */}
-    <polygon points="143,172 157,172 236,300 64,300" fill="#262b35" />
-    {[0, 1, 2, 3, 4].map((i) => (
+    {/* дорога и развилка: налево — к Раю, направо — в темноту */}
+    <g fill="#262b35">
+      <polygon points="128,214 172,214 236,300 64,300" />
+      <polygon points="128,216 150,216 74,174 66,174" />
+      <polygon points="150,216 172,216 244,174 236,174" />
+    </g>
+    {[0, 1, 2].map((i) => (
       <rect
         key={i}
-        x={149.4 - i * 0.6}
-        y={180 + i * 24}
-        width={1.2 + i * 1.2}
-        height={6 + i * 3}
+        x={149.2 - i * 0.8}
+        y={226 + i * 26}
+        width={1.6 + i * 1.6}
+        height={8 + i * 4}
         fill="#4a5161"
       />
     ))}
 
-    {trees(-1)}
-    {trees(1)}
+    {MIDDLE.map(([x, base, h]) => (
+      <Tree key={x} x={x} base={base} h={h} shade="#0e2a1f" />
+    ))}
 
-    {/* свет фонарика */}
-    <polygon points="146,246 156,246 182,176 118,176" fill="url(#pzBeam)" />
+    {/* свет фонарика на развилку */}
+    <polygon points="146,246 156,246 186,194 114,194" fill="url(#pzBeam)" />
 
-    {/* указатель */}
-    <rect x="206" y="214" width="3" height="40" fill="#5b4632" />
-    <polygon points="196,206 236,206 244,214 236,222 196,222" fill="#7a5c3e" />
+    {/* указатель «Рай» стрелкой налево */}
+    <rect x="149" y="190" width="3" height="26" fill="#5b4632" />
+    <polygon points="122,190 130,182 166,182 166,198 130,198" fill="#7a5c3e" />
     <text
-      x="216"
-      y="218.5"
+      x="146"
+      y="194"
       fontSize="11"
       fontWeight="600"
       fill="#fff6e0"
@@ -138,6 +170,10 @@ export const PuzzlePicture = ({ viewBox = "0 0 300 300", ...props }) => (
     >
       Рай
     </text>
+
+    {NEAR.map(([x, base, h]) => (
+      <Tree key={x} x={x} base={base} h={h} shade="#0a2018" />
+    ))}
 
     {/* двое, держатся за руки */}
     <g>
