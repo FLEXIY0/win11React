@@ -1035,46 +1035,45 @@ const ProductKey = ({ onDone }) => {
 
 // Командная строка: команды набираются сами, вывод появляется
 // построчно; письмо — медленно, чтобы его можно было прочитать.
-// Клик показывает всё сразу. В конце можно вводить команды, exit
-// закрывает окно
+// Клик дописывает письмо сразу. В конце после долгой паузы само
+// набирается «люблю», Windows отвечает, что такой команды нет,
+// окно мигает и исчезает
 const CMD_HEADER = `Microsoft Windows [Version 10.0.26100.2033]
 (c) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
 `;
 
+// паузы между буквами последней команды: человек сомневается
+const HESITATION = [900, 700, 1300, 600, 1000];
+
 const cmdTimeline = () => {
   const steps = [{ add: CMD_HEADER, wait: 1500 }];
+  let finalAt = 0;
   CMD_SCRIPT.forEach(({ cmd, out, pace }) => {
-    steps.push({ add: "\n" + CMD_PROMPT, wait: 900 });
-    for (const ch of cmd) steps.push({ add: ch, wait: randomDelay(60, 160) });
-    steps.push({ add: "\n", wait: pace == "read" ? 1200 : 700 });
+    const final = pace == "final";
+    if (final) finalAt = steps.length;
+    steps.push({ add: "\n" + CMD_PROMPT, wait: final ? 4500 : 900 });
+    [...cmd].forEach((ch, i) =>
+      steps.push({
+        add: ch,
+        wait: final ? HESITATION[i % HESITATION.length] : randomDelay(60, 160),
+      }),
+    );
+    steps.push({ add: "\n", wait: pace == "system" ? 700 : 1200 });
     out.split("\n").forEach((line) => {
       let wait = pace == "read" ? Math.max(700, line.length * 45) : 90;
       if (!line.trim()) wait = pace == "read" ? 500 : 60;
       steps.push({ add: line + "\n", wait });
     });
   });
-  steps.push({ add: "\n" + CMD_PROMPT, wait: 0 });
-  return steps;
-};
-
-const cmdReply = (cmd) => {
-  const c = cmd.trim().toLowerCase();
-  if (!c) return "";
-  if (c == "cls") return null;
-  if (c == "ver") return "\nMicrosoft Windows [Version 10.0.26100.2033]\n";
-  return `'${cmd.trim()}' не является внутренней или внешней
-командой, исполняемой программой или пакетным файлом.
-`;
+  steps.push({ add: "\n" + CMD_PROMPT, wait: 3500 });
+  return { steps, finalAt };
 };
 
 const Cmd = ({ onClose, closing }) => {
-  const steps = useMemo(cmdTimeline, []);
+  const { steps, finalAt } = useMemo(cmdTimeline, []);
   const [idx, setIdx] = useState(0);
-  const [extra, setExtra] = useState("");
-  const [cleared, setCleared] = useState(false);
-  const [line, setLine] = useState("");
+  const [blink, setBlink] = useState(false);
   const textRef = useRef();
-  const inputRef = useRef();
   const done = idx >= steps.length;
 
   useEffect(() => {
@@ -1086,31 +1085,23 @@ const Cmd = ({ onClose, closing }) => {
   useEffect(() => {
     const el = textRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-    if (done && inputRef.current) inputRef.current.focus();
-  }, [idx, extra, done]);
+  }, [idx]);
 
-  const shown = cleared
-    ? extra
-    : steps
-        .slice(0, idx)
-        .map((st) => st.add)
-        .join("") + extra;
+  useEffect(() => {
+    if (!done) return;
+    setBlink(true);
+    const timer = setTimeout(onClose, 1100);
+    return () => clearTimeout(timer);
+  }, [done]);
 
-  const run = () => {
-    const cmd = line;
-    setLine("");
-    if (cmd.trim().toLowerCase() == "exit") {
-      setExtra((e) => e + cmd);
-      return onClose();
-    }
-    const reply = cmdReply(cmd);
-    if (reply === null) {
-      setCleared(true);
-      setExtra(CMD_PROMPT);
-      return;
-    }
-    setExtra((e) => e + cmd + "\n" + reply + "\n" + CMD_PROMPT);
-  };
+  const shown = steps
+    .slice(0, idx)
+    .map((st) => st.add)
+    .join("");
+
+  let cls = "rcCmd";
+  if (closing) cls += " rcFadeOut";
+  else if (blink) cls += " rcCmdBlink";
 
   return (
     <Win
@@ -1118,30 +1109,15 @@ const Cmd = ({ onClose, closing }) => {
       icon={<MsgIcon type="terminal" size={16} />}
       width={900}
       onClose={onClose}
-      className={"rcCmd" + (closing ? " rcFadeOut" : "")}
+      className={cls}
     >
       <div
         className="rcCmdText"
         ref={textRef}
-        onClick={() => {
-          if (!done) setIdx(steps.length);
-          else if (inputRef.current) inputRef.current.focus();
-        }}
+        onClick={() => idx < finalAt && setIdx(finalAt)}
       >
         {shown}
-        {done && !closing ? (
-          <input
-            ref={inputRef}
-            className="rcCmdInput"
-            value={line}
-            spellCheck={false}
-            autoComplete="off"
-            style={{ width: line.length + 1 + "ch" }}
-            onChange={(e) => setLine(e.target.value)}
-            onKeyDown={(e) => e.key == "Enter" && run()}
-          />
-        ) : null}
-        {!done ? <span className="rcCmdCaret" /> : null}
+        <span className="rcCmdCaret" />
       </div>
     </Win>
   );

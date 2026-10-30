@@ -567,15 +567,40 @@
   user-select: text;
 }
 
-.rcCmdInput {
-  min-width: 1ch;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  caret-color: #cccccc;
-  background: transparent;
-  border: none;
-  outline: none;
+// окно мигает, как экран при сбое, перед тем как исчезнуть
+.rcCmdBlink {
+  animation: rcCmdBlink 1s steps(1) forwards;
+}
+
+@keyframes rcCmdBlink {
+  0% {
+    opacity: 1;
+  }
+  12% {
+    opacity: 0.1;
+  }
+  24% {
+    opacity: 1;
+    filter: brightness(1.6);
+  }
+  36% {
+    opacity: 0;
+  }
+  52% {
+    opacity: 1;
+  }
+  64% {
+    opacity: 0.25;
+  }
+  76% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .rcCmdCaret {
