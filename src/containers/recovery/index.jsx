@@ -1060,8 +1060,10 @@ const cmdTimeline = () => {
     );
     steps.push({ add: "\n", wait: pace == "system" ? 700 : 1200 });
     out.split("\n").forEach((line) => {
-      let wait = pace == "read" ? Math.max(700, line.length * 45) : 90;
-      if (!line.trim()) wait = pace == "read" ? 500 : 60;
+      // письмо читают медленно: короткая строка держится не меньше
+      // секунды, пустая строка — пауза
+      let wait = pace == "read" ? Math.max(1100, line.length * 55) : 90;
+      if (!line.trim()) wait = pace == "read" ? 900 : 60;
       steps.push({ add: line + "\n", wait });
     });
   });
