@@ -6,8 +6,8 @@ import {
   IDENTITY,
   MEMORY_PAIRS,
   AFFIRMATIONS,
-  NOTEPAD_FILE,
-  NOTEPAD_TEXT,
+  CMD_PROMPT,
+  CMD_SCRIPT,
   PRODUCT,
   RESTORED_FILES,
   RESTORE_POINTS,
@@ -38,7 +38,7 @@ const ICONS = {
   key: "img/icon/fluent/lock_shield_48_color.svg",
   info: "img/icon/win/info.png",
   keyboard: "img/icon/win/1479.png",
-  notepad: "img/icon/notepad.png",
+  terminal: "img/icon/terminal.png",
 };
 
 const MsgIcon = ({ type, size = 32 }) => (
@@ -53,8 +53,6 @@ const MsgIcon = ({ type, size = 32 }) => (
 );
 
 const RestoreIcon = ({ size = 16 }) => <MsgIcon type="restore" size={size} />;
-
-const NotepadIcon = ({ size = 16 }) => <MsgIcon type="notepad" size={size} />;
 
 // Окно Windows 11 со светлой рамкой; перетаскивается за заголовок
 const Win = ({
@@ -1035,58 +1033,115 @@ const ProductKey = ({ onDone }) => {
   );
 };
 
-// Блокнот с восстановленным файлом: текст печатается, клик дописывает
-const Notepad = ({ onClose, closing }) => {
-  const [shown, setShown] = useState(0);
+// Командная строка: команды набираются сами, вывод появляется
+// построчно; письмо — медленно, чтобы его можно было прочитать.
+// Клик показывает всё сразу. В конце можно вводить команды, exit
+// закрывает окно
+const CMD_HEADER = `Microsoft Windows [Version 10.0.26100.2033]
+(c) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+`;
+
+const cmdTimeline = () => {
+  const steps = [{ add: CMD_HEADER, wait: 1500 }];
+  CMD_SCRIPT.forEach(({ cmd, out, pace }) => {
+    steps.push({ add: "\n" + CMD_PROMPT, wait: 900 });
+    for (const ch of cmd) steps.push({ add: ch, wait: randomDelay(60, 160) });
+    steps.push({ add: "\n", wait: pace == "read" ? 1200 : 700 });
+    out.split("\n").forEach((line) => {
+      let wait = pace == "read" ? Math.max(700, line.length * 45) : 90;
+      if (!line.trim()) wait = pace == "read" ? 500 : 60;
+      steps.push({ add: line + "\n", wait });
+    });
+  });
+  steps.push({ add: "\n" + CMD_PROMPT, wait: 0 });
+  return steps;
+};
+
+const cmdReply = (cmd) => {
+  const c = cmd.trim().toLowerCase();
+  if (!c) return "";
+  if (c == "cls") return null;
+  if (c == "ver") return "\nMicrosoft Windows [Version 10.0.26100.2033]\n";
+  return `'${cmd.trim()}' не является внутренней или внешней
+командой, исполняемой программой или пакетным файлом.
+`;
+};
+
+const Cmd = ({ onClose, closing }) => {
+  const steps = useMemo(cmdTimeline, []);
+  const [idx, setIdx] = useState(0);
+  const [extra, setExtra] = useState("");
+  const [cleared, setCleared] = useState(false);
+  const [line, setLine] = useState("");
   const textRef = useRef();
-  const done = shown >= NOTEPAD_TEXT.length;
+  const inputRef = useRef();
+  const done = idx >= steps.length;
 
   useEffect(() => {
     if (done) return;
-    const ch = NOTEPAD_TEXT[shown];
-    let wait = 22;
-    if (ch == "\n") wait = 260;
-    else if (/[.,—!?]/.test(ch)) wait = 140;
-    const timer = setTimeout(() => setShown(shown + 1), wait);
+    const timer = setTimeout(() => setIdx(idx + 1), steps[idx].wait);
     return () => clearTimeout(timer);
-  }, [shown]);
+  }, [idx]);
 
   useEffect(() => {
     const el = textRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [shown]);
+    if (done && inputRef.current) inputRef.current.focus();
+  }, [idx, extra, done]);
 
-  const text = NOTEPAD_TEXT.slice(0, shown);
-  const lines = text.split("\n");
+  const shown = cleared
+    ? extra
+    : steps
+        .slice(0, idx)
+        .map((st) => st.add)
+        .join("") + extra;
+
+  const run = () => {
+    const cmd = line;
+    setLine("");
+    if (cmd.trim().toLowerCase() == "exit") {
+      setExtra((e) => e + cmd);
+      return onClose();
+    }
+    const reply = cmdReply(cmd);
+    if (reply === null) {
+      setCleared(true);
+      setExtra(CMD_PROMPT);
+      return;
+    }
+    setExtra((e) => e + cmd + "\n" + reply + "\n" + CMD_PROMPT);
+  };
 
   return (
     <Win
-      title={NOTEPAD_FILE + " — Блокнот"}
-      icon={<NotepadIcon />}
-      width={760}
+      title={"C:\\WINDOWS\\system32\\cmd.exe"}
+      icon={<MsgIcon type="terminal" size={16} />}
+      width={900}
       onClose={onClose}
-      className={"rcNotepad" + (closing ? " rcFadeOut" : "")}
+      className={"rcCmd" + (closing ? " rcFadeOut" : "")}
     >
-      <div className="rcNpMenu">
-        <span>Файл</span>
-        <span>Правка</span>
-        <span>Просмотр</span>
-      </div>
       <div
-        className="rcNpText"
+        className="rcCmdText"
         ref={textRef}
-        onClick={() => setShown(NOTEPAD_TEXT.length)}
+        onClick={() => {
+          if (!done) setIdx(steps.length);
+          else if (inputRef.current) inputRef.current.focus();
+        }}
       >
-        {text}
-        <span className="rcCaret" />
-      </div>
-      <div className="rcNpStatus">
-        <span>
-          Стр {lines.length}, стлб {lines[lines.length - 1].length + 1}
-        </span>
-        <span>100%</span>
-        <span>Windows (CRLF)</span>
-        <span>UTF-8</span>
+        {shown}
+        {done && !closing ? (
+          <input
+            ref={inputRef}
+            className="rcCmdInput"
+            value={line}
+            spellCheck={false}
+            autoComplete="off"
+            style={{ width: line.length + 1 + "ch" }}
+            onChange={(e) => setLine(e.target.value)}
+            onKeyDown={(e) => e.key == "Enter" && run()}
+          />
+        ) : null}
+        {!done ? <span className="rcCmdCaret" /> : null}
       </div>
     </Win>
   );
@@ -1169,7 +1224,7 @@ export const Recovery = () => {
     return () => clearTimeout(timer);
   }, [wall.locked, wall.recovered, phase]);
 
-  // Блокнот и чёрный безопасный режим становятся прозрачными, сквозь
+  // Командная строка и чёрный безопасный режим становятся прозрачными, сквозь
   // них проступает обычный рабочий стол; потом окно приложения
   // пробует закрыться (в отдельном окне или приложении Tauri)
   const closeApp = () => {
@@ -1227,9 +1282,9 @@ export const Recovery = () => {
         <MsgBox
           title="Восстановление системы"
           icon="info"
-          onClose={() => setPhase("notepad")}
+          onClose={() => setPhase("letter")}
           z={0}
-          buttons={[{ label: "Закрыть", onClick: () => setPhase("notepad") }]}
+          buttons={[{ label: "Закрыть", onClick: () => setPhase("letter") }]}
         >
           <p>Восстановление системы успешно завершено.</p>
           <p>
@@ -1238,8 +1293,8 @@ export const Recovery = () => {
           </p>
         </MsgBox>
       ) : null}
-      {phase == "notepad" || phase == "closing" ? (
-        <Notepad onClose={closeApp} closing={phase == "closing"} />
+      {phase == "letter" || phase == "closing" ? (
+        <Cmd onClose={closeApp} closing={phase == "closing"} />
       ) : null}
     </>
   );
