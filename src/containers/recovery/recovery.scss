@@ -363,31 +363,31 @@
   color: #5d5d5d;
 }
 
-// Проверка памяти: текстовый экран
+// Проверка памяти: текстовый режим 80×25, цвета палитры VGA.
+// Размер шрифта подобран так, чтобы 80 знакомест влезали по ширине,
+// а 25 строк — по высоте
 .rcMem {
   position: fixed;
   inset: 0;
   z-index: 20000;
   display: flex;
   flex-direction: column;
-  background: #000080;
-  color: #fff;
-  font-family: "Lucida Console", Consolas, monospace;
-  font-size: 15px;
-  line-height: 1.5;
+  background: #0000aa;
+  color: #aaaaaa;
+  font-family: "Lucida Console", Consolas, "Courier New", monospace;
+  font-size: min(calc(100vw / 49), calc(100vh / 31.5));
+  line-height: 1.25;
+  white-space: pre;
   cursor: default;
   user-select: none;
-
-  p {
-    margin: 0 0 16px;
-  }
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  overflow: hidden;
 }
 
-.rcMemTop,
-.rcMemBottom {
-  padding: 4px 16px;
-  background: #c0c0c0;
-  color: #000080;
+.rcMemBar {
+  background: #aaaaaa;
+  color: #000000;
 }
 
 .rcMemTop {
@@ -397,51 +397,31 @@
 .rcMemBottom {
   display: flex;
   justify-content: space-between;
+  padding: 0 1ch;
 }
 
 .rcMemBody {
   flex: 1;
-  overflow-y: auto;
-  padding: 24px clamp(16px, 6vw, 80px);
+  overflow: hidden;
 }
 
-.rcMemGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 150px));
-  gap: 10px;
-
-  @media (max-width: 560px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.rcMemBlock {
-  display: grid;
-  place-items: center;
-  height: 64px;
-  border: 1px solid #a8a8ff;
-  color: #ffff55;
-  font-size: 13px;
-  cursor: pointer;
-
-  &:hover {
-    background: #0000aa;
+.rcTm {
+  &[data-color="white"] {
+    color: #ffffff;
   }
 
-  &[data-open="true"] {
-    background: #0000aa;
+  &[data-color="yellow"] {
+    color: #ffff55;
   }
 
-  &[data-found="true"] {
-    border-color: #55ff55;
-    cursor: default;
+  &[data-color="green"] {
+    color: #55ff55;
   }
-}
 
-.rcEmoji {
-  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji",
-    sans-serif;
-  font-size: 30px;
+  &[data-cursor="true"] {
+    background: #aaaaaa;
+    color: #0000aa;
+  }
 }
 
 // Блокнот

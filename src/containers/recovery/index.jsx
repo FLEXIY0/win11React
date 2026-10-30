@@ -688,13 +688,20 @@ const DxDiag = ({ onDone }) => {
   );
 };
 
-// «Средство проверки памяти Windows»: текстовый синий экран,
-// найти совпадающие блоки памяти
+// «Средство проверки памяти Windows»: настоящий текстовый режим 80×25,
+// только знакоместа и цвета VGA. Нужно найти блоки с одинаковыми данными
+const COLS = 4;
+const CELL = 16;
+const center = (str, width) => {
+  const left = Math.floor((width - str.length) / 2);
+  return " ".repeat(left) + str + " ".repeat(width - str.length - left);
+};
+
 const MemTest = ({ onDone }) => {
   const blocks = useMemo(
     () =>
-      shuffle([...MEMORY_BLOCKS, ...MEMORY_BLOCKS]).map((icon, i) => ({
-        icon,
+      shuffle([...MEMORY_BLOCKS, ...MEMORY_BLOCKS]).map((word, i) => ({
+        word,
         addr:
           "0x" +
           (0x1a000 + i * 0x1f40 + Math.floor(Math.random() * 0x40) * 0x10)
@@ -704,68 +711,130 @@ const MemTest = ({ onDone }) => {
       })),
     [],
   );
+  const [cursor, setCursor] = useState(0);
   const [open, setOpen] = useState([]);
   const [found, setFound] = useState([]);
+  const done = found.length == MEMORY_BLOCKS.length;
+  const percent = Math.round((found.length / MEMORY_BLOCKS.length) * 100);
 
-  const flip = (i) => {
-    if (open.length == 2 || open.includes(i) || found.includes(blocks[i].icon))
-      return;
+  const check = (i) => {
+    if (done || open.length == 2 || open.includes(i)) return;
+    if (found.includes(blocks[i].word)) return;
     const now = [...open, i];
     setOpen(now);
     if (now.length < 2) return;
     const [a, b] = now.map((k) => blocks[k]);
+    const same = a.word == b.word;
     setTimeout(
       () => {
-        if (a.icon == b.icon) setFound((f) => [...f, a.icon]);
+        if (same) setFound((f) => [...f, a.word]);
         setOpen([]);
       },
-      a.icon == b.icon ? 400 : 900,
+      same ? 500 : 1100,
     );
   };
 
-  const done = found.length == MEMORY_BLOCKS.length;
-  const percent = Math.round((found.length / MEMORY_BLOCKS.length) * 100);
+  // стрелки двигают выделение, ВВОД проверяет блок
+  const state = useRef();
+  state.current = { cursor, check };
+  useEffect(() => {
+    const onKey = (e) => {
+      const { cursor, check } = state.current;
+      const n = blocks.length;
+      const moves = {
+        ArrowLeft: -1,
+        ArrowRight: 1,
+        ArrowUp: -COLS,
+        ArrowDown: COLS,
+      };
+      if (moves[e.key] != null) {
+        e.preventDefault();
+        setCursor((cursor + moves[e.key] + n) % n);
+      } else if (e.key == "Enter" || e.key == " ") {
+        e.preventDefault();
+        check(cursor);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     if (!done) return;
-    const timer = setTimeout(onDone, 2500);
+    const timer = setTimeout(onDone, 3000);
     return () => clearTimeout(timer);
   }, [done]);
 
+  const cell = (b, i) => {
+    const isFound = found.includes(b.word);
+    const isOpen = isFound || open.includes(i);
+    const text = center(isOpen ? b.word : b.addr, CELL - 4);
+    return (
+      <React.Fragment key={i}>
+        <span
+          className="rcTm"
+          data-color={isFound ? "green" : isOpen ? "yellow" : ""}
+          data-cursor={cursor == i && !done}
+          onClick={() => {
+            setCursor(i);
+            check(i);
+          }}
+        >
+          {" " + text + " "}
+        </span>
+        {"  "}
+      </React.Fragment>
+    );
+  };
+
+  const rows = [];
+  for (let r = 0; r < blocks.length / COLS; r++) {
+    rows.push(
+      <div key={"r" + r}>
+        {"   "}
+        {blocks
+          .slice(r * COLS, r * COLS + COLS)
+          .map((b, k) => cell(b, r * COLS + k))}
+      </div>,
+      <div key={"g" + r}> </div>,
+    );
+  }
+
   return (
     <div className="rcMem">
-      <div className="rcMemTop">Средство проверки памяти Windows</div>
+      <div className="rcMemBar rcMemTop">
+        Средство диагностики памяти Windows
+      </div>
       <div className="rcMemBody">
-        <p>
-          Выполняется проверка памяти. Найдите совпадающие блоки, чтобы
-          проверить их целостность.
-        </p>
-        <p>
-          Выполняется проход 1 из 1. Общее состояние: {percent}%
-          <br />
-          Состояние:{" "}
+        <div> </div>
+        <div>
+          {"   Windows проверяет память. Это может занять несколько минут."}
+        </div>
+        <div>
+          {"   Найдите блоки с одинаковыми данными, чтобы проверить их."}
+        </div>
+        <div> </div>
+        <div>
+          {"   Выполняется проход 1 из 1. Общее состояние: " + percent + "%"}
+        </div>
+        <div>
+          {"   Состояние: "}
+          <span data-color={done ? "white" : ""} className="rcTm">
+            {done
+              ? "неполадки оборудования не обнаружены."
+              : "неполадки пока не обнаружены."}
+          </span>
+        </div>
+        <div> </div>
+        <div> </div>
+        {rows}
+        <div>
           {done
-            ? "неполадки оборудования не обнаружены."
-            : "неполадки пока не обнаружены."}
-        </p>
-        <div className="rcMemGrid">
-          {blocks.map((b, i) => {
-            const isOpen = open.includes(i) || found.includes(b.icon);
-            return (
-              <div
-                key={i}
-                className="rcMemBlock"
-                data-open={isOpen}
-                data-found={found.includes(b.icon)}
-                onClick={() => flip(i)}
-              >
-                {isOpen ? <span className="rcEmoji">{b.icon}</span> : b.addr}
-              </div>
-            );
-          })}
+            ? "   Проверка завершена. Компьютер продолжит восстановление."
+            : "   Стрелки — выбор блока, ВВОД — проверить блок."}
         </div>
       </div>
-      <div className="rcMemBottom">
+      <div className="rcMemBar rcMemBottom">
         <span>ESC=Выход</span>
         <span>F1=Параметры</span>
       </div>
