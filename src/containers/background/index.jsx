@@ -199,7 +199,14 @@ export const BootScreen = (props) => {
       >
         <BootLogo />
         <div className="mt-48" id="loader" data-hide={!ring}>
-          <Spinner size={40} />
+          <svg
+            className="progressRing"
+            height={48}
+            width={48}
+            viewBox="0 0 16 16"
+          >
+            <circle cx="8px" cy="8px" r="7px"></circle>
+          </svg>
         </div>
       </div>
     </div>
