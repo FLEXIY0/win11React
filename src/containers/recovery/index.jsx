@@ -931,7 +931,6 @@ const ProductKey = ({ onDone }) => {
         <p>
           <b>Расположение комплекта:</b> {PRODUCT.where}
         </p>
-        <p className="rcMuted">{PRODUCT.tip}</p>
         <p className="rcMuted">
           Ключ продукта выглядит примерно так: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
         </p>
