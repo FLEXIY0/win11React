@@ -239,6 +239,24 @@
   border-radius: 6px;
 }
 
+// Снимок настоящего рабочего стола проявляется поверх всего
+.rcRealDesktop {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  width: 100vw;
+  height: 100vh;
+  object-fit: fill;
+  pointer-events: none;
+  animation: rcAppear 2.2s ease-in-out forwards;
+}
+
+@keyframes rcAppear {
+  from {
+    opacity: 0;
+  }
+}
+
 // Закрытие: окно становится прозрачным
 .rcFadeOut {
   pointer-events: none;

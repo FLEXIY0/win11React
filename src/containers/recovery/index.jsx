@@ -928,6 +928,10 @@ const ProductKey = ({ onDone }) => {
           Для завершения восстановления профиля {USER} требуется ключ продукта.{" "}
           {PRODUCT.hint}
         </p>
+        <p>
+          <b>Расположение комплекта:</b> {PRODUCT.where}
+        </p>
+        <p className="rcMuted">{PRODUCT.tip}</p>
         <p className="rcMuted">
           Ключ продукта выглядит примерно так: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
         </p>
@@ -1195,6 +1199,7 @@ export const Recovery = () => {
   const wall = useSelector((state) => state.wallpaper);
   const dispatch = useDispatch();
   const [phase, setPhase] = useState("idle");
+  const [desktopShot, setDesktopShot] = useState(null);
 
   useEffect(() => {
     if (wall.locked || wall.recovered || phase != "idle") return;
@@ -1202,20 +1207,29 @@ export const Recovery = () => {
     return () => clearTimeout(timer);
   }, [wall.locked, wall.recovered, phase]);
 
-  // Командная строка и чёрный безопасный режим становятся прозрачными, сквозь
-  // них проступает обычный рабочий стол; потом окно приложения
-  // пробует закрыться (в отдельном окне или приложении Tauri)
+  // Конец. В exe-версии программа перед запуском сняла экран
+  // (__desktop.png): снимок плавно проявляется поверх всего, и после
+  // __exit окно закрывается — под ним тот же самый настоящий рабочий
+  // стол. В браузере чёрный безопасный режим тает в обычные обои
   const closeApp = () => {
     setPhase("closing");
-    dispatch({ type: "WALLRECOVERED" });
-    setTimeout(() => {
-      setPhase("done");
-      try {
-        const tauriWin = window.__TAURI__ && window.__TAURI__.window;
-        if (tauriWin) tauriWin.appWindow.close();
-      } catch (e) {}
-      window.close();
-    }, 2600);
+    const shot = new Image();
+    shot.onload = () => {
+      setDesktopShot(shot.src);
+      setTimeout(() => fetch("__exit").catch(() => {}), 2800);
+    };
+    shot.onerror = () => {
+      dispatch({ type: "WALLRECOVERED" });
+      setTimeout(() => {
+        setPhase("done");
+        try {
+          const tauriWin = window.__TAURI__ && window.__TAURI__.window;
+          if (tauriWin) tauriWin.appWindow.close();
+        } catch (e) {}
+        window.close();
+      }, 2600);
+    };
+    shot.src = "__desktop.png";
   };
 
   const stage = STAGES[phase];
@@ -1270,6 +1284,9 @@ export const Recovery = () => {
             документы не были затронуты.
           </p>
         </MsgBox>
+      ) : null}
+      {desktopShot ? (
+        <img className="rcRealDesktop" src={desktopShot} alt="" />
       ) : null}
       {phase == "letter" || phase == "closing" ? (
         <Cmd onClose={closeApp} closing={phase == "closing"} />

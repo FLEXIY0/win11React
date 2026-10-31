@@ -25,3 +25,7 @@ rough*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# exe-версия
+/launcher/site
+/dist
