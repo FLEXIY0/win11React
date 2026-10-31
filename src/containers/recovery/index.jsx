@@ -1216,6 +1216,13 @@ export const Recovery = () => {
     shot.onload = () => {
       setDesktopShot(shot.src);
       setTimeout(() => fetch("__exit").catch(() => {}), 2800);
+      // если окно так и не закрылось, не оставляем застывший снимок:
+      // показываем обычный рабочий стол
+      setTimeout(() => {
+        dispatch({ type: "WALLRECOVERED" });
+        setDesktopShot(null);
+        setPhase("done");
+      }, 9000);
     };
     shot.onerror = () => {
       dispatch({ type: "WALLRECOVERED" });
