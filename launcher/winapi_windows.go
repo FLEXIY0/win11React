@@ -29,6 +29,7 @@ var (
 	procDeleteObject            = gdi32.NewProc("DeleteObject")
 	procDeleteDC                = gdi32.NewProc("DeleteDC")
 	procSetThreadExecutionState = kernel32.NewProc("SetThreadExecutionState")
+	procKeybdEvent              = user32.NewProc("keybd_event")
 )
 
 const (
@@ -52,6 +53,13 @@ func messageBox(text, caption string, flags uintptr) {
 	c, _ := syscall.UTF16PtrFromString(caption)
 	procMessageBoxW.Call(0, uintptr(unsafe.Pointer(t)), uintptr(unsafe.Pointer(c)),
 		flags|mbTopmost|mbForeground)
+}
+
+// Нажимает F11 в активном окне
+func pressF11() {
+	const vkF11, keyUp = 0x7A, 0x0002
+	procKeybdEvent.Call(vkF11, 0, 0, 0)
+	procKeybdEvent.Call(vkF11, 0, keyUp, 0)
 }
 
 // Не даёт компьютеру уснуть и погасить экран, пока программа ждёт

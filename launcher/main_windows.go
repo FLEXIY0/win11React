@@ -18,7 +18,7 @@ const (
 	detachedProcess       = 0x00000008
 	createNewProcessGroup = 0x00000200
 	// заголовок вкладки сайта: по нему можно закрыть окно браузера,
-	// даже если Edge передал его другому своему процессу
+	// даже если браузер передал его другому своему процессу
 	pageTitle = "Win11 in React"
 )
 
@@ -105,27 +105,61 @@ func main() {
 	time.Sleep(6 * time.Second)
 }
 
-func findBrowser() (path string, edge bool) {
+type browserKind int
+
+const (
+	kindEdge browserKind = iota
+	kindChromium
+	kindFirefox
+)
+
+// Ищем установленный браузер, который умеет полноэкранный режим без
+// рамок (--kiosk): сначала Edge, потом популярные Chromium-браузеры,
+// потом Firefox
+func findBrowser() (string, browserKind) {
 	env := os.Getenv
-	for _, p := range []string{
-		filepath.Join(env("ProgramFiles(x86)"), `Microsoft\Edge\Application\msedge.exe`),
-		filepath.Join(env("ProgramFiles"), `Microsoft\Edge\Application\msedge.exe`),
-		filepath.Join(env("LocalAppData"), `Microsoft\Edge\Application\msedge.exe`),
-	} {
-		if _, err := os.Stat(p); err == nil {
-			return p, true
+	pf, pf86, local := env("ProgramFiles"), env("ProgramFiles(x86)"), env("LocalAppData")
+	candidates := []struct {
+		path string
+		kind browserKind
+	}{
+		{filepath.Join(pf86, `Microsoft\Edge\Application\msedge.exe`), kindEdge},
+		{filepath.Join(pf, `Microsoft\Edge\Application\msedge.exe`), kindEdge},
+		{filepath.Join(local, `Microsoft\Edge\Application\msedge.exe`), kindEdge},
+		{filepath.Join(local, `Yandex\YandexBrowser\Application\browser.exe`), kindChromium},
+		{filepath.Join(pf, `Yandex\YandexBrowser\Application\browser.exe`), kindChromium},
+		{filepath.Join(pf86, `Yandex\YandexBrowser\Application\browser.exe`), kindChromium},
+		{filepath.Join(pf, `Google\Chrome\Application\chrome.exe`), kindChromium},
+		{filepath.Join(pf86, `Google\Chrome\Application\chrome.exe`), kindChromium},
+		{filepath.Join(local, `Google\Chrome\Application\chrome.exe`), kindChromium},
+		{filepath.Join(pf, `BraveSoftware\Brave-Browser\Application\brave.exe`), kindChromium},
+		{filepath.Join(local, `BraveSoftware\Brave-Browser\Application\brave.exe`), kindChromium},
+		{filepath.Join(local, `Vivaldi\Application\vivaldi.exe`), kindChromium},
+		{filepath.Join(pf, `Vivaldi\Application\vivaldi.exe`), kindChromium},
+		{filepath.Join(local, `Programs\Opera\opera.exe`), kindChromium},
+		{filepath.Join(local, `Programs\Opera GX\opera.exe`), kindChromium},
+		{filepath.Join(pf, `Mozilla Firefox\firefox.exe`), kindFirefox},
+		{filepath.Join(pf86, `Mozilla Firefox\firefox.exe`), kindFirefox},
+	}
+	for _, c := range candidates {
+		if _, err := os.Stat(c.path); err == nil {
+			return c.path, c.kind
 		}
 	}
-	for _, p := range []string{
-		filepath.Join(env("ProgramFiles"), `Google\Chrome\Application\chrome.exe`),
-		filepath.Join(env("ProgramFiles(x86)"), `Google\Chrome\Application\chrome.exe`),
-		filepath.Join(env("LocalAppData"), `Google\Chrome\Application\chrome.exe`),
-	} {
-		if _, err := os.Stat(p); err == nil {
-			return p, false
-		}
+	return "", kindChromium
+}
+
+func browserArgs(kind browserKind, url, profile string) []string {
+	if kind == kindFirefox {
+		return []string{"-kiosk", "-no-remote", "-profile", profile, url}
 	}
-	return "", false
+	args := []string{"--kiosk", url, "--no-first-run", "--no-default-browser-check",
+		"--user-data-dir=" + profile, "--autoplay-policy=no-user-gesture-required",
+		"--lang=ru", "--disable-features=Translate,msEdgeTranslate"}
+	if kind == kindEdge {
+		args = append(args, "--edge-kiosk-type=fullscreen")
+	}
+	return args
 }
 
 // Фоновая копия: ждёт, снимает экран, открывает открытку на весь экран
@@ -158,20 +192,20 @@ func runChild(at time.Time) {
 		log.Printf("снимок экрана не получился: %v", err)
 	}
 
-	browser, edge := findBrowser()
+	browser, kind := findBrowser()
 	log.Printf("браузер: %q", browser)
 	var cmd *exec.Cmd
 	profile := filepath.Join(os.TempDir(), "otkrytka-profile")
 	if browser == "" {
+		// подходящего браузера нет: открываем в браузере по умолчанию
+		// и сами нажимаем F11, чтобы развернуть на весь экран
 		exec.Command("rundll32", "url.dll,FileProtocolHandler", s.url).Start()
+		time.Sleep(4 * time.Second)
+		pressF11()
 	} else {
 		os.RemoveAll(profile)
-		args := []string{"--kiosk", s.url, "--no-first-run", "--no-default-browser-check",
-			"--user-data-dir=" + profile, "--autoplay-policy=no-user-gesture-required"}
-		if edge {
-			args = append(args, "--edge-kiosk-type=fullscreen")
-		}
-		cmd = exec.Command(browser, args...)
+		os.MkdirAll(profile, 0o755)
+		cmd = exec.Command(browser, browserArgs(kind, s.url, profile)...)
 		if err := cmd.Start(); err != nil {
 			log.Printf("браузер не запустился: %v", err)
 			messageBox("Не удалось открыть браузер: "+err.Error(), "Открытка", mbIconError)
@@ -183,7 +217,7 @@ func runChild(at time.Time) {
 		}()
 	}
 
-	// Edge может передать окно другому своему процессу, поэтому ждём
+	// браузер может передать окно другому своему процессу, поэтому ждём
 	// сигнала от открытки, а не завершения процесса
 	select {
 	case <-s.exit:
