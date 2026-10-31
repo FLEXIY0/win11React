@@ -113,9 +113,9 @@ const (
 	kindFirefox
 )
 
-// Ищем установленный браузер, который умеет полноэкранный режим без
-// рамок (--kiosk): сначала Edge, потом популярные Chromium-браузеры,
-// потом Firefox
+// Запасной путь, если WebView2 недоступен: установленный браузер,
+// который умеет полноэкранный режим без рамок (--kiosk): сначала Edge,
+// потом популярные Chromium-браузеры, потом Zen и Firefox
 func findBrowser() (string, browserKind) {
 	env := os.Getenv
 	pf, pf86, local := env("ProgramFiles"), env("ProgramFiles(x86)"), env("LocalAppData")
@@ -138,6 +138,9 @@ func findBrowser() (string, browserKind) {
 		{filepath.Join(pf, `Vivaldi\Application\vivaldi.exe`), kindChromium},
 		{filepath.Join(local, `Programs\Opera\opera.exe`), kindChromium},
 		{filepath.Join(local, `Programs\Opera GX\opera.exe`), kindChromium},
+		{filepath.Join(pf, `Zen Browser\zen.exe`), kindFirefox},
+		{filepath.Join(local, `Zen Browser\zen.exe`), kindFirefox},
+		{filepath.Join(local, `Programs\Zen Browser\zen.exe`), kindFirefox},
 		{filepath.Join(pf, `Mozilla Firefox\firefox.exe`), kindFirefox},
 		{filepath.Join(pf86, `Mozilla Firefox\firefox.exe`), kindFirefox},
 	}
@@ -163,7 +166,8 @@ func browserArgs(kind browserKind, url, profile string) []string {
 }
 
 // Фоновая копия: ждёт, снимает экран, открывает открытку на весь экран
-// и закрывает браузер, когда открытка скажет /__exit
+// (в своём окне WebView2, а если его нет — в браузере) и закрывает окно,
+// когда открытка скажет /__exit
 func runChild(at time.Time) {
 	if f, err := os.Create(logPath()); err == nil {
 		defer f.Close()
@@ -190,6 +194,11 @@ func runChild(at time.Time) {
 		log.Printf("снимок экрана: %d байт", len(png))
 	} else {
 		log.Printf("снимок экрана не получился: %v", err)
+	}
+
+	if runWebView(s) {
+		log.Printf("готово")
+		return
 	}
 
 	browser, kind := findBrowser()
